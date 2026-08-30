@@ -1,7 +1,34 @@
+
+@font-face {
+  font-family: "Text";
+  src: url("../assets/fonts/Supreme-Variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Titre";
+  src: url("../assets/fonts/ClashDisplay-Variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   margin: 0;
   min-width: 100dvh;
   min-height: 100dvh;
+
+  background-color: var(--bg);
+  background-image: radial-gradient(70rem 40rem at 78% -8%, var(--accent-soft), transparent 62%), radial-gradient(50rem 34rem at 0% 12%, rgba(255, 255, 255, 0.045), transparent 60%), linear-gradient(180deg, var(--bg-2), var(--bg) 55%);
+  font-family: "Text", sans-serif;
+}
+
+
+a {
+  color: var(--accent);
+  text-decoration: none;
 }
 
 * {
