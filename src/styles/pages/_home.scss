@@ -21,3 +21,23 @@
     margin-top: 0.9rem;
   }
 }
+
+.shell {
+  width: var(--shell);
+  margin-inline: auto;
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(14px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
