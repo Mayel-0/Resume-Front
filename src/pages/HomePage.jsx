@@ -5,6 +5,7 @@ import About from '../components/about'
 import Parcours from '../components/parcours'
 import Skills from '../components/skills'
 import Projects from '../components/projects'
+import Contacts from '../components/contacts'
 
 function HomePage() {
   return (
@@ -16,6 +17,7 @@ function HomePage() {
         <Parcours />
         <Skills />
         <Projects />
+        <Contacts/>
       </main>
     </div>
   )

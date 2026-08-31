@@ -136,3 +136,21 @@
   flex-wrap: wrap;
   gap: 0.45rem;
 }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  font-weight: 600;
+}
+
+.eyebrow::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--accent);
+}
