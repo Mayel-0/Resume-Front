@@ -2,7 +2,7 @@ function Skills() {
   return (
     <section id="competences" className="section shell">
       <div className="section__head">
-        <span className="section__index">05</span>
+        <span className="section__index">03</span>
         <h2>Compétences</h2>
       </div>
       <p className="section__lead">

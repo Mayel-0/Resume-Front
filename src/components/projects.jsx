@@ -34,7 +34,7 @@ function Projets() {
   return (
     <section id="projets" className="projects section shell">
       <div className="section__head">
-        <span className="section__index">06</span>
+        <span className="section__index">04</span>
         <h2>Projets</h2>
       </div>
       <p className="section__lead">
