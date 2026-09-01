@@ -1,53 +1,25 @@
 import { MoveRight } from "lucide-react";
-import { useState, useEffect } from "react";
-
-const getProfile = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/profil`);
-    if (!response.ok) throw new Error("Erreur profil");
-    const data = await response.json();
-    return data[0];
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
-const getSocials = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/socials`);
-    if (!response.ok) throw new Error("Erreur socials");
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
+import useProfile from "../hooks/useHero.js";
+import useSocials from "../hooks/useSocials.js";
 
 function Hero() {
 
-  const [Profil, setProfil] = useState(null);
-  const [Socials, setSocials] = useState(null);
+  const { profil, loading: loadingProfil } = useProfile();
+  const { socials, loading: loadingSocials } = useSocials();
 
-  useEffect(() => {
-    getProfile().then(setProfil);
-    getSocials().then(setSocials);
-  }, []);
-
-  if (!Profil || !Socials) return <p>Chargement...</p>;
+  if (loadingProfil || loadingSocials) return <p>Chargement...</p>;
 
   return (
     <section className="Hero" id="hero">
       <div className="shell hero__inner">
         <div className="hero__text">
-          <span className="location">{Profil.location}</span>
+          <span className="location">{profil.location}</span>
           <h1>
-            {Profil.firstName}<br />
-            <span>{Profil.lastName}</span>
+            {profil.firstName}<br />
+            <span>{profil.lastName}</span>
           </h1>
-          <p className="hero__role">{Profil.role}</p>
-          <p className="hero__tagline">{Profil.tagline}</p>
+          <p className="hero__role">{profil.role}</p>
+          <p className="hero__tagline">{profil.tagline}</p>
 
           <div className="hero__actions">
             <a className="btn btn--accent" href="#projets">Voir mes projets
@@ -58,7 +30,7 @@ function Hero() {
           </div>
 
           <ul className="hero__socials">
-            {Socials.map((socials) => (
+            {socials.map((socials) => (
               <li key={socials.order}>
                 <a href={socials.href} target="_blank" rel="noopener noreferrer" aria-label={socials.label}>
                   <svg
@@ -77,7 +49,7 @@ function Hero() {
 
         <div className="hero__portrait">
           <div className="hero__glow" aria-hidden="true"></div>
-          <img src={`${import.meta.env.VITE_API_URL}${Profil.portraitUrl}`} alt={`Portrait de ${Profil.firstName} ${Profil.lastName}`} />
+          <img src={`${import.meta.env.VITE_API_URL}${profil.portraitUrl}`} alt={`Portrait de ${profil.firstName} ${profil.lastName}`} />
         </div>
       </div>
 

@@ -1,40 +1,12 @@
-import { useState, useEffect } from "react";
-
-const getSkillCategories = async () => {
-  try {
-    const repsonse = await fetch(`${import.meta.env.VITE_API_URL}/api/skill-categories`);
-    if (!repsonse.ok) throw new Error("Erreur skill-categories");
-    const data = await repsonse.json();
-    return data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-}
-
-const getSkills = async () => {
-  try {
-    const repsonse = await fetch(`${import.meta.env.VITE_API_URL}/api/skill-items`);
-    if (!repsonse.ok) throw new Error("Erreur skill-items");
-    const data = await repsonse.json();
-    return data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-}
+import useSkillsItems from "../hooks/useSkillsItems.js";
+import useSkillCategories from "../hooks/useSkillCategories.js";
 
 function Skills() {
 
-  const [skillCategories, setSkillCatgeories] = useState(null);
-  const [skillItems, setSkillItems] = useState(null);
+  const {skillCategories, loading: loadingskillCategories} = useSkillCategories();
+  const {skillsItems, loading: loadingskillsitems} = useSkillsItems();
 
-  useEffect(() => {
-    getSkillCategories().then(setSkillCatgeories);
-    getSkills().then(setSkillItems);
-  }, []);
-
-  if (!skillCategories || !skillItems) return <p>Chargement...</p>;
+  if (loadingskillCategories || loadingskillsitems) return <p>Chargement...</p>;
 
   return (
     <section id="competences" className="section shell">
@@ -51,7 +23,7 @@ function Skills() {
           <article className="card" key={category.order}>
             <h3>{category.title}</h3>
             <div className="tag-list">
-              {skillItems
+              {skillsItems
                 .filter((item) => item.categoryId === category.id)
                 .map((item) => (
                   <span className="tag" key={item.id}>

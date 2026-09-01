@@ -1,33 +1,13 @@
 import ProjectCard from "./projectCard";
-import eldoria from "../assets/images/Eldoria.webp";
-import faceRecognition from "../assets/images/FaceRecognition.webp";
-import ctf from "../assets/images/CTF.webp";
-import onePieceDle from "../assets/images/onepiecedle.png";
-import cloudPerso from "../assets/images/cloudperso.png";
-import techTalk from "../assets/images/tecktalk.png";
 
 import { MoveRight } from "lucide-react";
-import { useState, useEffect } from "react";
+import useProjects from "../hooks/useProject.js";
 
-const getProjects = async () => {
-    try {
-    const repsonse = await fetch(`${import.meta.env.VITE_API_URL}/api/projects`);
-    if (!repsonse.ok) throw new Error("Erreur projects");
-    const data = await repsonse.json();
-    return data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-}
 
 function Projets() {
-  const [projects, setProjects] = useState(null);
-  useEffect(() => {
-    getProjects().then(setProjects);
-  }, []);
+  const { projects, loading: loadingProjects } = useProjects();
 
-  if (!projects) return <p>Chargement...</p>;
+  if (loadingProjects) return <p>Chargement...</p>;
 
   return (
     <section id="projets" className="projects section shell">

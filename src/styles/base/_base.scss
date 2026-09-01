@@ -23,6 +23,7 @@ body {
   background-color: var(--bg);
   background-image: radial-gradient(70rem 40rem at 78% -8%, var(--accent-soft), transparent 62%), radial-gradient(50rem 34rem at 0% 12%, rgba(255, 255, 255, 0.045), transparent 60%), linear-gradient(180deg, var(--bg-2), var(--bg) 55%);
   font-family: "Text", sans-serif;
+  overflow-x: hidden;
 }
 
 

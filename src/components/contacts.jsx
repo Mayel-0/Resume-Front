@@ -1,29 +1,11 @@
 import { MoveRight } from "lucide-react";
-import { useState, useEffect } from "react";
-
-
-const getSocials = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/socials`);
-    if (!response.ok) throw new Error("Erreur socials");
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
-};
-
+import useSocials from "../hooks/useSocials.js";
 
 
 function Contact() {
-    const [Socials, setSocials] = useState(null);
+    const {socials, loading: loadingSocials }= useSocials();
 
-    useEffect(() => {
-      getSocials().then(setSocials);
-    }, []);
-
-    if (!Socials) return <p>Chargement...</p>;
+    if (loadingSocials) return <p>Chargement...</p>;
 
   return (
     <section id="contact" className="section shell">
@@ -38,7 +20,7 @@ function Contact() {
         </div>
 
         <ul className="contact__links">
-          {Socials.map((social) => (
+          {socials.map((social) => (
             <li key={social.order}>
               <a href={social.href} target="_blank" rel="noopener noreferrer">
                   <svg
