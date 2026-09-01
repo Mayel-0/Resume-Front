@@ -7,6 +7,8 @@ import Skills from '../components/skills'
 import Projects from '../components/projects'
 import Contacts from '../components/contacts'
 
+import Footer from '../components/footer'
+
 function HomePage() {
   return (
     <div>
@@ -18,6 +20,7 @@ function HomePage() {
         <Skills />
         <Projects />
         <Contacts/>
+        <Footer/>
       </main>
     </div>
   )
