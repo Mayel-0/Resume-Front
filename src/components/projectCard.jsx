@@ -5,11 +5,11 @@ function ProjectCard({ project }) {
     <article className="project-card card">
       <a
         className="project-card__media"
-        href={`/projet#${project.id}`}
+        href={`/projet#${project.slug}`}
         aria-label={`Voir le détail du projet ${project.title}`}
       >
         <img
-          src={project.image}
+          src={`${import.meta.env.VITE_API_URL}${project.imageUrl}`}
           alt={`Aperçu du projet ${project.title}`}
           loading="lazy"
         />
@@ -25,14 +25,14 @@ function ProjectCard({ project }) {
 
         <p className="project-card__intro">{project.intro}</p>
 
-        <div className="tag-list">
+        {/* <div className="tag-list">
           {project.tags.map((tag) => (
             <span key={tag} className="tag">{tag}</span>
           ))}
-        </div>
+        </div> */}
 
         <div className="project-card__actions">
-          <a className="btn btn--sm" href={`/projet#${project.id}`}>
+          <a className="btn btn--sm" href={`/projet#${project.slug}`}>
             Détails
             <MoveRight size={16} aria-hidden="true" />
           </a>

@@ -1,6 +1,30 @@
 import { MoveRight } from "lucide-react";
+import { useState, useEffect } from "react";
+
+
+const getSocials = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/socials`);
+    if (!response.ok) throw new Error("Erreur socials");
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
+
 
 function Contact() {
+    const [Socials, setSocials] = useState(null);
+
+    useEffect(() => {
+      getSocials().then(setSocials);
+    }, []);
+
+    if (!Socials) return <p>Chargement...</p>;
+
   return (
     <section id="contact" className="section shell">
       <div className="contact card">
@@ -14,30 +38,23 @@ function Contact() {
         </div>
 
         <ul className="contact__links">
-          <li>
-            <a href="https://www.linkedin.com/in/llado-mael-54008a384/" target="_blank" rel="noopener noreferrer">
-              {/* LinkedinIcon */}
-              <span className="contact__label">Linkedin</span>
-              <span className="contact__handle">llado-mael</span>
-              <MoveRight size={24} aria-hidden="true" />
-            </a>
-          </li>
-          <li>
-            <a href="https://github.com/Mayel-0" target="_blank" rel="noopener noreferrer">
-              {/* GithubIcon */}
-              <span className="contact__label">Github</span>
-              <span className="contact__handle">Mayel-0</span>
-              <MoveRight size={24} aria-hidden="true" />
-            </a>
-          </li>
-          <li>
-            <a href="mailto:llado.mael33@gmail.com" target="_blank" rel="noopener noreferrer">
-              {/* MailIcon */}
-              <span className="contact__label">Gmail</span>
-              <span className="contact__handle">llado.mael33@gmail.com</span>
-              <MoveRight size={24} aria-hidden="true" />
-            </a>
-          </li>
+          {Socials.map((social) => (
+            <li key={social.order}>
+              <a href={social.href} target="_blank" rel="noopener noreferrer">
+                  <svg
+                    viewBox={social.viewBox || social.viewbox}
+                    fill="currentColor"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path d={social.path} />
+                  </svg>
+                <span className="contact__label">{social.label}</span>
+                <span className="contact__handle">{social.handle}</span>
+                <MoveRight size={24} aria-hidden="true" />
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
     </section>

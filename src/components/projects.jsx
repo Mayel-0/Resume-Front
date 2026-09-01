@@ -7,30 +7,28 @@ import cloudPerso from "../assets/images/cloudperso.png";
 import techTalk from "../assets/images/tecktalk.png";
 
 import { MoveRight } from "lucide-react";
+import { useState, useEffect } from "react";
 
-
-const projects = [
-  { id: "eldoria", title: "Projet_Red: Eldoria", image: eldoria, visibility: "Public",
-    intro: "Jeu d'aventure textuel CLI réalisé en une semaine en Golang lors de la B1 à Ynov.", tags: ["Golang", "CLI", "Jeu"],
-    link: "https://github.com/StarWeizz/projet-red_Eldoria", linkLabel: "Voir sur GitHub" },
-  { id: "face-recognition", title: "Face Recognition", image: faceRecognition, visibility: "Public",
-    intro: "Logiciel de reconnaissance faciale en Python présenté à l'oral du Bac Pro SN.", tags: ["Python", "Vision", "OpenCV"],
-    link: "https://github.com/Mayel-0/projet-chef-doeuvre-2024", linkLabel: "Voir sur GitHub" },
-  { id: "ctf", title: "CTF", image: ctf, visibility: "Privé",
-    intro: "Participation au CTF 2025 Root Me — entraînement au hacking éthique.", tags: ["Cybersécurité", "Root Me", "Web"],
-    link: "https://github.com/Mayel-0/CTF-Entrainement-et-Realisation", linkLabel: "Voir sur GitHub" },
-  { id: "one-piece-dle", title: "One Piece DLE", image: onePieceDle, visibility: "Public",
-    intro: "Fan game basé sur l'univers de One Piece, mode classique et fruits du démon.", tags: ["Vue.js", "Jeu", "Front-end"],
-    link: "https://one-piece-dle-game.vercel.app/", linkLabel: "Voir le site" },
-  { id: "cloud-perso", title: "Cloud Perso", image: cloudPerso, visibility: "Public",
-    intro: "Cloud self-hosted full Golang avec gestion multi-utilisateurs, A2F et backups.", tags: ["Golang", "MySQL", "Self-hosted"],
-    link: "https://github.com/Mayel-0/Cloud_perso", linkLabel: "Voir sur GitHub" },
-  { id: "tech-talk", title: "Tech Talk", image: techTalk, visibility: "Privé",
-    intro: "Plateforme de podcasts étudiants sur la tech et l'impact de l'IA sur nos métiers.", tags: ["Web", "Podcast", "En cours"],
-    link: "https://github.com/Mayel-0/Tech_Talk-Remaster-JS", linkLabel: "Voir sur GitHub" },
-];
+const getProjects = async () => {
+    try {
+    const repsonse = await fetch(`${import.meta.env.VITE_API_URL}/api/projects`);
+    if (!repsonse.ok) throw new Error("Erreur projects");
+    const data = await repsonse.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
 
 function Projets() {
+  const [projects, setProjects] = useState(null);
+  useEffect(() => {
+    getProjects().then(setProjects);
+  }, []);
+
+  if (!projects) return <p>Chargement...</p>;
+
   return (
     <section id="projets" className="projects section shell">
       <div className="section__head">
