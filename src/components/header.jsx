@@ -10,7 +10,10 @@ function Header() {
         </a>
 
         <nav className="header__nav" aria-label="Navigation principale">
-          <a href="#apropos">À propos</a>
+          <a
+          href="#apropos"
+          
+          >À propos</a>
           <a href="#parcours">Parcours</a>
           <a href="#competences">Compétences</a>
           <a href="#projets">Projets</a>
