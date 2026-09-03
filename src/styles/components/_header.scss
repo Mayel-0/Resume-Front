@@ -1,8 +1,10 @@
 @use '../abstracts/variables' as *;
 
 .header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  width: 100%;
   z-index: 50;
   height: var(--header-h);
   display: flex;
@@ -13,10 +15,6 @@
   transition:
     border-color 0.3s var(--ease),
     background 0.3s var(--ease);
-
-  @include respond-to(mobile) {
-    position: relative;
-  }
 
   &__inner {
     width: var(--shell);
@@ -181,7 +179,7 @@
   .header {
     height: auto;
     min-height: var(--header-h);
-    position: sticky;
+    position: fixed;
 
     &__inner {
       position: relative;
