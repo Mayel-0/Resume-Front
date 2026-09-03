@@ -78,6 +78,12 @@
   font-size: 0.85rem;
 }
 
+@include respond-to(mobile) {
+  .btn {
+    min-height: 44px;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

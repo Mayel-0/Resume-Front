@@ -1,3 +1,5 @@
+@use '../abstracts/variables' as *;
+
 .contact {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -55,4 +57,35 @@
   }
 
 
+}
+
+@include respond-to(tablet) {
+  .contact {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+@include respond-to(mobile) {
+  .contact {
+    padding: 1.25rem;
+    gap: 1.5rem;
+
+    &__links a {
+      grid-template-columns: 20px minmax(0, 1fr) 20px;
+      gap: 0.65rem;
+      padding: 0.85rem;
+    }
+
+    &__handle {
+      grid-column: 2;
+      grid-row: 2;
+      text-align: left;
+    }
+
+    &__links svg:last-child {
+      grid-column: 3;
+      grid-row: 1 / span 2;
+    }
+  }
 }

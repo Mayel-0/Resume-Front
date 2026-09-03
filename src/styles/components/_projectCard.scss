@@ -1,3 +1,5 @@
+@use '../abstracts/variables' as *;
+
 .project-card {
   padding: 0;
   overflow: hidden;
@@ -80,5 +82,25 @@
 
 .status--private {
   color: #f87171;
+}
+
+@include respond-to(mobile) {
+  .project-card {
+    &__body {
+      padding: 1.15rem;
+    }
+
+    &__top {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    &__actions {
+      .btn {
+        flex: 1 1 auto;
+      }
+    }
+  }
 }
 

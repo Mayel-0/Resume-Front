@@ -16,7 +16,7 @@ function Parcours() {
     () => {
       if (!timeline) return;
 
-      gsap.utils.toArray(".timelineItem").forEach((item) => {
+      gsap.utils.toArray(".timeline__item").forEach((item) => {
         gsap.fromTo(
           item,
           { opacity: 0, x: 100 },
@@ -49,7 +49,7 @@ function Parcours() {
 
       <ol className="timeline" ref={containerRef}>
         {timeline.map((item) => (
-          <li className="timelineItem" key={item.order}>
+          <li className="timeline__item" key={item.order}>
             <span className="timeline__period">{item.period}</span>
             <div className="timeline__body">
               <h3>{item.title}</h3>

@@ -1,3 +1,5 @@
+@use '../abstracts/variables' as *;
+
 .about {
   display: grid;
   grid-template-columns: 1.35fr 0.65fr;
@@ -38,6 +40,23 @@
       margin: 0;
       color: var(--text);
       font-size: 0.95rem;
+    }
+  }
+}
+
+@include respond-to(tablet) {
+  .about {
+    grid-template-columns: 1fr;
+  }
+}
+
+@include respond-to(mobile) {
+  .about {
+    gap: 1.5rem;
+
+    &__text {
+      font-size: 1rem;
+      line-height: 1.7;
     }
   }
 }

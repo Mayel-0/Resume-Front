@@ -1,3 +1,5 @@
+@use '../abstracts/variables' as *;
+
 .section {
   padding-block: clamp(4rem, 9vw, 7.5rem);
   &__index {
@@ -19,6 +21,37 @@
     color: var(--text-2);
     max-width: 62ch;
     margin-top: 0.9rem;
+  }
+}
+
+@include respond-to(tablet) {
+  .section {
+    padding-block: 5rem;
+
+    &__head {
+      margin-bottom: 2rem;
+    }
+  }
+}
+
+@include respond-to(mobile) {
+  .shell {
+    width: $phone-shell;
+  }
+
+  .section {
+    padding-block: 4rem;
+
+    &__head {
+      align-items: flex-start;
+      gap: 0.65rem;
+      margin-bottom: 1.75rem;
+
+      h2 {
+        flex: 1;
+        min-width: 0;
+      }
+    }
   }
 }
 

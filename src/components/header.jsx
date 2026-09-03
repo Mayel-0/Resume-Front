@@ -1,6 +1,9 @@
-import { Download, Menu } from "lucide-react";
+import { Download, Menu, X } from "lucide-react";
+import { useState } from "react";
 
 function Header() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <header className="header">
       <div className="header__inner">
@@ -9,16 +12,16 @@ function Header() {
           <span>Maël LLADO</span>
         </a>
 
-        <nav className="header__nav" aria-label="Navigation principale">
+        <nav id="main-navigation" className={`header__nav${isMenuOpen ? " header__nav--open" : ""}`} aria-label="Navigation principale">
           <a
           href="#apropos"
-          
+          onClick={() => setIsMenuOpen(false)}
           >À propos</a>
-          <a href="#parcours">Parcours</a>
-          <a href="#competences">Compétences</a>
-          <a href="#projets">Projets</a>
-          <a href="#contact">Contact</a>
-          <a href="#Dprojets">Détail des projets</a>
+          <a href="#parcours" onClick={() => setIsMenuOpen(false)}>Parcours</a>
+          <a href="#competences" onClick={() => setIsMenuOpen(false)}>Compétences</a>
+          <a href="#projets" onClick={() => setIsMenuOpen(false)}>Projets</a>
+          <a href="#contact" onClick={() => setIsMenuOpen(false)}>Contact</a>
+          <a href="#Dprojets" onClick={() => setIsMenuOpen(false)}>Détail des projets</a>
         </nav>
 
         <div>
@@ -27,8 +30,15 @@ function Header() {
             Télécharger le CV
           </a>
 
-          <button className="hide-desktop" type="button" aria-label="Ouvrir le menu">
-            <Menu size={20} />
+          <button
+            className="header__menu"
+            type="button"
+            aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="main-navigation"
+            onClick={() => setIsMenuOpen((isOpen) => !isOpen)}
+          >
+            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
         </div>
       </div>

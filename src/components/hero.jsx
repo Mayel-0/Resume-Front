@@ -10,10 +10,10 @@ function Hero() {
   if (loadingProfil || loadingSocials) return <p>Chargement...</p>;
 
   return (
-    <section className="Hero" id="hero">
+    <section className="hero" id="hero">
       <div className="shell hero__inner">
         <div className="hero__text">
-          <span className="location">{profil.location}</span>
+          <span className="hero__location">{profil.location}</span>
           <h1>
             {profil.firstName}<br />
             <span>{profil.lastName}</span>
