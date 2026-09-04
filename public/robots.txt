@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# On interdit l'admin
+Disallow: /admin
+
+Sitemap: https://mael-llado.com/sitemap.xml
