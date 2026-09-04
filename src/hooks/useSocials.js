@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const useSocials = () => {
-  const [socials, setSocials] = useState(null);
+  const [socials, setSocials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

@@ -1,13 +1,4 @@
-import useSkillsItems from "../hooks/useSkillsItems.js";
-import useSkillCategories from "../hooks/useSkillCategories.js";
-
-function Skills() {
-
-  const {skillCategories, loading: loadingskillCategories} = useSkillCategories();
-  const {skillsItems, loading: loadingskillsitems} = useSkillsItems();
-
-  if (loadingskillCategories || loadingskillsitems) return <p>Chargement...</p>;
-
+function Skills({skillCategories = [], skillsItems = []}) {
   return (
     <section id="competences" className="section shell">
       <div className="section__head">

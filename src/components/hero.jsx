@@ -1,13 +1,6 @@
 import { MoveRight } from "lucide-react";
-import useProfile from "../hooks/useHero.js";
-import useSocials from "../hooks/useSocials.js";
 
-function Hero() {
-
-  const { profil, loading: loadingProfil } = useProfile();
-  const { socials, loading: loadingSocials } = useSocials();
-
-  if (loadingProfil || loadingSocials) return <p>Chargement...</p>;
+function Hero({profil = [], socials = []}) {
 
   return (
     <section className="hero" id="hero">

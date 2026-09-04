@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const useProjects = () => {
-  const [projects, setProjects] = useState(null);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

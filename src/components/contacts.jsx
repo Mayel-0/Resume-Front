@@ -1,12 +1,6 @@
 import { MoveRight } from "lucide-react";
-import useSocials from "../hooks/useSocials.js";
 
-
-function Contact() {
-    const {socials, loading: loadingSocials }= useSocials();
-
-    if (loadingSocials) return <p>Chargement...</p>;
-
+function Contact({socials = []}) {
   return (
     <section id="contact" className="section shell">
       <div className="contact card">

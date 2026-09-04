@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const useTimeline = () => {
-  const [timeline, setTimeline] = useState(null);
+  const [timeline, setTimeline] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

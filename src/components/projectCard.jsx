@@ -1,6 +1,6 @@
 import { MoveRight } from "lucide-react";
 
-function ProjectCard({ project }) {
+function ProjectCard({ project = []}) {
   return (
     <article className="project-card card">
       <a

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const useSections = () => {
-  const [sections, setSections] = useState(null);
+  const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 

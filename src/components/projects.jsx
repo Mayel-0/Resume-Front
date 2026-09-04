@@ -1,14 +1,8 @@
 import ProjectCard from "./projectCard";
 
 import { MoveRight } from "lucide-react";
-import useProjects from "../hooks/useProject.js";
 
-
-function Projets() {
-  const { projects, loading: loadingProjects } = useProjects();
-
-  if (loadingProjects) return <p>Chargement...</p>;
-
+function Projets({projects = []}) {
   return (
     <section id="projets" className="projects section shell">
       <div className="section__head">

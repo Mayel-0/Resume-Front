@@ -2,19 +2,15 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import useTimeline from "../hooks/useTimeline";
-import useSections from "../hooks/useSections";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
-function Parcours() {
+function Parcours({timeline = [], sections = []}) {
   const containerRef = useRef();
-  const { timeline, loading: loadingTimeline } = useTimeline();
-  const { sections, loading: loadingSections } = useSections();
 
   useGSAP(
     () => {
-      if (!timeline) return;
+      if (!timeline.length) return;
 
       gsap.utils.toArray(".timeline__item").forEach((item) => {
         gsap.fromTo(
@@ -37,8 +33,6 @@ function Parcours() {
     },
     { scope: containerRef, dependencies: [timeline] }
   );
-
-  if (loadingTimeline || loadingSections) return <p>Chargement...</p>;
 
   return (
     <section id="parcours" className="section shell">

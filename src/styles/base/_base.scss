@@ -35,7 +35,7 @@ body {
 }
 
 main {
-  padding-top: var(--header-h);
+  padding-top: calc(var(--header-h) - 1rem);
 }
 
 @include respond-to(tablet) {

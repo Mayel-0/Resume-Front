@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 
 const useProfile = () => {
-  const [profil, setProfil] = useState(null);
+  const [profil, setProfil] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
