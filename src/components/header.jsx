@@ -90,7 +90,14 @@ function Header() {
         </nav>
 
         <div>
-          <a className="header__cv" href={`${import.meta.env.VITE_API_URL}/documents/Cv_Mael_llado.pdf`} download>
+          <a
+            className="header__cv"
+            href={`${import.meta.env.VITE_API_URL}/documents/Cv_Mael_llado.pdf`}
+            download="CV_Mael_Llado.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Télécharger le CV de Maël Llado au format PDF"
+          >
             <Download size={16} aria-hidden="true" />
             Télécharger le CV
           </a>
