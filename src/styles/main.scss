@@ -15,4 +15,7 @@
 @use './components/projects';
 @use './components/projectCard';
 
-@use './pages/home'
+@use './components/projectArticle';
+
+@use './pages/home';
+@use './pages/projectD';

@@ -1,5 +1,4 @@
 import React from 'react'
-import Header from '../components/header'
 import Hero from '../components/hero'
 import About from '../components/about'
 import Parcours from '../components/parcours'
@@ -8,8 +7,6 @@ import Projects from '../components/projects'
 import Contacts from '../components/contacts'
 
 import PageLoader from '../components/pagesLoader'
-
-import Footer from '../components/footer'
 
 import useProfile from "../hooks/useHero.js";
 import useSocials from "../hooks/useSocials.js";
@@ -34,7 +31,6 @@ function HomePage() {
 
   return (
     <div>
-      <Header/>
       <PageLoader loading={isLoading}>
         <main>
           <Hero profil={profil} socials={socials}/>
@@ -43,7 +39,6 @@ function HomePage() {
           <Skills skillCategories={skillCategories} skillsItems={skillsItems} />
           <Projects projects={projects}/>
           <Contacts socials={socials} />
-          <Footer/>
         </main>
       </PageLoader>
     </div>
