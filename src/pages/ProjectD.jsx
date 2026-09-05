@@ -1,9 +1,9 @@
 import PageLoader from "../components/pagesLoader";
 import { useState } from "react";
-import useProjects from "../hooks/useProject.js";
-import useProjectsTags from "../hooks/useProjectsTags.js";
-import useProjectsStack from "../hooks/useprojectsStack.js";
-import ProjectArticle from "../components/projectArticle.jsx";
+import useProjects from "../hooks/useProject";
+import useProjectsTags from "../hooks/useProjectsTags";
+import useProjectsStack from "../hooks/useProjectsStack";
+import ProjectArticle from "../components/projectArticle";
 
 function ProjectPage() {
   const { projects, loading: loadingProjects } = useProjects();
