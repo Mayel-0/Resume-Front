@@ -1,11 +1,20 @@
 import { Download, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
+  const isProjectsPage = location.pathname === "/ProjectsD";
 
   useEffect(() => {
+    if (!isHomePage) {
+      setActiveSection("");
+      return undefined;
+    }
+
     const sections = ["apropos", "parcours", "competences", "projets", "contact"]
       .map((id) => document.getElementById(id))
       .filter(Boolean);
@@ -40,7 +49,7 @@ function Header() {
       window.removeEventListener("resize", handleScroll);
       if (frameId !== undefined) window.cancelAnimationFrame(frameId);
     };
-  }, []);
+  }, [isHomePage]);
 
   const handleNavClick = (sectionId) => {
     setActiveSection(sectionId);
@@ -71,36 +80,41 @@ function Header() {
 
         <nav id="main-navigation" className={`header__nav${isMenuOpen ? " header__nav--open" : ""}`} aria-label="Navigation principale">
           <a
-          href="#apropos"
-          className={activeSection === "apropos" ? "is-active" : ""}
-          aria-current={activeSection === "apropos" ? "location" : undefined}
+          href="/#apropos"
+          className={isHomePage && activeSection === "apropos" ? "is-active" : ""}
+          aria-current={isHomePage && activeSection === "apropos" ? "location" : undefined}
           onClick={() => handleNavClick("apropos")}
           >À propos</a>
           <a
-            href="#parcours"
-            className={activeSection === "parcours" ? "is-active" : ""}
-            aria-current={activeSection === "parcours" ? "location" : undefined}
+            href="/#parcours"
+            className={isHomePage && activeSection === "parcours" ? "is-active" : ""}
+            aria-current={isHomePage && activeSection === "parcours" ? "location" : undefined}
             onClick={() => handleNavClick("parcours")}
           >Parcours</a>
           <a
-            href="#competences"
-            className={activeSection === "competences" ? "is-active" : ""}
-            aria-current={activeSection === "competences" ? "location" : undefined}
+            href="/#competences"
+            className={isHomePage && activeSection === "competences" ? "is-active" : ""}
+            aria-current={isHomePage && activeSection === "competences" ? "location" : undefined}
             onClick={() => handleNavClick("competences")}
           >Compétences</a>
           <a
-            href="#projets"
-            className={activeSection === "projets" ? "is-active" : ""}
-            aria-current={activeSection === "projets" ? "location" : undefined}
+            href="/#projets"
+            className={isHomePage && activeSection === "projets" ? "is-active" : ""}
+            aria-current={isHomePage && activeSection === "projets" ? "location" : undefined}
             onClick={() => handleNavClick("projets")}
           >Projets</a>
           <a
-            href="#contact"
-            className={activeSection === "contact" ? "is-active" : ""}
-            aria-current={activeSection === "contact" ? "location" : undefined}
+            href="/#contact"
+            className={isHomePage && activeSection === "contact" ? "is-active" : ""}
+            aria-current={isHomePage && activeSection === "contact" ? "location" : undefined}
             onClick={() => handleNavClick("contact")}
           >Contact</a>
-          <a href="#Dprojets" onClick={() => handleNavClick("Dprojets")}>Détail des projets</a>
+          <a
+            href="/ProjectsD"
+            className={isProjectsPage ? "is-active" : ""}
+            aria-current={isProjectsPage ? "page" : undefined}
+            onClick={() => handleNavClick("projectsD")}
+          >Détail des projets</a>
         </nav>
 
         <div>
