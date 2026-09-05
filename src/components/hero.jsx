@@ -2,6 +2,20 @@ import { MoveRight } from "lucide-react";
 
 function Hero({profil = [], socials = []}) {
 
+  const handleDownload = async () => {
+    const url = `${import.meta.env.VITE_API_URL}/documents/Cv_Mael_llado.pdf`;
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = "CV_Mael_Llado.pdf";
+    a.click();
+
+    URL.revokeObjectURL(blobUrl);
+  };
+
   return (
     <section className="hero" id="hero">
       <div className="shell hero__inner">
@@ -18,8 +32,9 @@ function Hero({profil = [], socials = []}) {
             <a className="btn btn--accent" href="#projets">Voir mes projets
               <MoveRight size={24} aria-hidden="true" />
             </a>
-            <a className="btn" href="/fichiers/CV_Mael_LLADO_V3.pdf" download>Télécharger le CV</a>
-            <a className="btn btn--ghost" href="/fichiers/PortfolioMaelLLADO.pdf" download>Portfolio</a>
+            <a className="header__cv" onClick={handleDownload} aria-label="...">
+              Télécharger le CV
+            </a>
           </div>
 
           <ul className="hero__socials">
