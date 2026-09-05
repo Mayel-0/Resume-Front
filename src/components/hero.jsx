@@ -32,7 +32,7 @@ function Hero({profil = [], socials = []}) {
             <a className="btn btn--accent" href="#projets">Voir mes projets
               <MoveRight size={24} aria-hidden="true" />
             </a>
-            <a className="header__cv" onClick={handleDownload} aria-label="...">
+            <a class="btn" onClick={handleDownload} aria-label="...">
               Télécharger le CV
             </a>
           </div>
