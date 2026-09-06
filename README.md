@@ -27,7 +27,7 @@ Oracle Cloud (Ubuntu)
   │         ├── mael-llado.com/api    → Backend Node.js
   │         └── admin.mael-llado.com  → Panel Admin
   │
-  └── MySQL  ◄─── Toutes les données (textes, projets, images, documents)
+  └── PostgreSQL  ◄─── Toutes les données (textes, projets, images, documents)
 ```
 
 > Le client ne communique jamais directement avec le serveur Oracle.
