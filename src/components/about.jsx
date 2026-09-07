@@ -1,4 +1,4 @@
-function About() {
+function About({briefs = []}) {
   return (
     <section id="apropos" className="section shell">
       <div className="section__head">
@@ -10,10 +10,9 @@ function About() {
         <aside className="about__aside card">
           <h3>En bref</h3>
           <dl>
-            <div><dt>Formation</dt><dd>Ynov Campus Bordeaux</dd></div>
-            <div><dt>Diplôme</dt><dd>Bac Pro SN option RISC — Très Bien</dd></div>
-            <div><dt>Localisation</dt><dd>Bordeaux, France</dd></div>
-            <div><dt>Recherche</dt><dd>Alternance / stage en développement</dd></div>
+            {briefs.map((brief) => (
+              <div><dt>{brief.title}</dt><dd>{brief.subtitle}</dd></div>
+            ))}
           </dl>
         </aside>
       </div>

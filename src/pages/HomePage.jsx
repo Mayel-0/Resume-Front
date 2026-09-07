@@ -15,6 +15,7 @@ import useSections from "../hooks/useSections";
 import useProjects from "../hooks/useProject.js";
 import useSkillsItems from "../hooks/useSkillsItems.js";
 import useSkillCategories from "../hooks/useSkillCategories.js";
+import useBriefs from '../hooks/usebriefs.js';
 
 function HomePage() {
 
@@ -23,18 +24,19 @@ function HomePage() {
   const { timeline, loading: loadingTimeline } = useTimeline();
   const { sections, loading: loadingSections } = useSections();
   const { projects, loading: loadingProjects } = useProjects();
+  const {briefs, loading: loadingBriefs} = useBriefs();
   const {skillCategories, loading: loadingskillCategories} = useSkillCategories();
   const {skillsItems, loading: loadingskillsitems} = useSkillsItems();
 
 
-  const isLoading = [loadingProfil,loadingSocials,loadingTimeline,loadingSections,loadingProjects,loadingskillCategories,loadingskillsitems].some(Boolean);
+  const isLoading = [loadingProfil,loadingSocials,loadingTimeline,loadingSections,loadingProjects,loadingskillCategories,loadingskillsitems,loadingBriefs].some(Boolean);
 
   return (
     <div>
       <PageLoader loading={isLoading}>
         <main>
           <Hero profil={profil} socials={socials}/>
-          <About />
+          <About briefs={briefs} />
           <Parcours timeline={timeline} sections={sections}/>
           <Skills skillCategories={skillCategories} skillsItems={skillsItems} />
           <Projects projects={projects}/>
