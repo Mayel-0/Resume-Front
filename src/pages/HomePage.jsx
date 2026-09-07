@@ -35,7 +35,7 @@ function HomePage() {
     <div>
       <PageLoader loading={isLoading}>
         <main>
-          <Hero profil={profil} socials={socials}/>
+          <Hero profil={profil} socials={socials} isReady={!isLoading}/>
           <About briefs={briefs} />
           <Parcours timeline={timeline} sections={sections}/>
           <Skills skillCategories={skillCategories} skillsItems={skillsItems} />

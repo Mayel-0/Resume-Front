@@ -160,3 +160,16 @@
   height: 1px;
   background: var(--accent);
 }
+
+.typewriter {
+  border-right: 2px solid #fff;
+  white-space: nowrap;
+  animation: blink 0.75s step-end infinite;
+}
+
+@keyframes blink {
+  from, to { border-color: transparent; }
+  50% { border-color: #000; }
+}
+
+
