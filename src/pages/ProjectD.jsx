@@ -1,9 +1,10 @@
 import PageLoader from "../components/pagesLoader";
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import useProjects from "../hooks/useProject";
 import useProjectsTags from "../hooks/useProjectsTags";
 import useProjectsStack from "../hooks/useProjectsStack";
 import ProjectArticle from "../components/projectArticle";
+import { useLocation } from "react-router-dom";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -15,6 +16,7 @@ function ProjectPage() {
   const { projectsTags, loading: loadingProjectsTags } = useProjectsTags();
   const { projectsStack, loading: loadingProjectsStack } = useProjectsStack();
   const loading = [loadingProjects, loadingProjectsTags, loadingProjectsStack].some(Boolean);
+  const location = useLocation();
 
   const FILTERS = ["All", "Public", "Privé"];
   const [filtreActive, setFiltreActive] = useState("All");
@@ -22,6 +24,17 @@ function ProjectPage() {
   const filteredProjects = projects.filter(
     (project) => filtreActive === "All" || project.visibility === filtreActive
   );
+
+  useEffect(() => {
+    if (loading || !location.hash) return undefined;
+
+    const timer = window.setTimeout(() => {
+      const project = document.getElementById(location.hash.slice(1));
+      project?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+
+    return () => window.clearTimeout(timer);
+  }, [loading, location.hash, filteredProjects.length]);
 
   const containerRef = useRef();
 

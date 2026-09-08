@@ -2,7 +2,7 @@ import { useRef } from "react";
 
 function ProjectArticle({projects = [], projectsTags = [], projectsStack = []}) {
   return (
-    <article className="card projectD-article">
+    <article id={projects.slug} className="card projectD-article">
       <div className="projectD-article__grid">
         <div className="projectD-article__media">
           <img src={`${import.meta.env.VITE_API_URL}${projects.imageUrl}`} alt={`${projects.title}`} />

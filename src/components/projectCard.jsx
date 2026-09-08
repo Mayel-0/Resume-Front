@@ -5,7 +5,7 @@ function ProjectCard({ project = []}) {
     <article className="project-card card">
       <a
         className="project-card__media"
-        href={`/projet#${project.slug}`}
+        href={`/ProjectsD#${project.slug}`}
         aria-label={`Voir le détail du projet ${project.title}`}
       >
         <img
@@ -32,7 +32,7 @@ function ProjectCard({ project = []}) {
         </div> */}
 
         <div className="project-card__actions">
-          <a className="btn btn--sm" href={`/projet#${project.slug}`}>
+          <a className="btn btn--sm" href={`/ProjectsD#${project.slug}`}>
             Détails
             <MoveRight size={16} aria-hidden="true" />
           </a>
