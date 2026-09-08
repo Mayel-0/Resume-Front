@@ -20,7 +20,7 @@ function Projets({projects = []}) {
       </div>
 
       <div className="projects__more">
-        <a className="btn btn--accent" href="/projet">
+        <a className="btn btn--accent" href="/ProjectsD">
           Voir tous les détails techniques
           <MoveRight size={24} aria-hidden="true" />
         </a>
