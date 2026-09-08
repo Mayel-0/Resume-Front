@@ -13,6 +13,7 @@ import useSocials from "../hooks/useSocials.js";
 import useTimeline from "../hooks/useTimeline";
 import useSections from "../hooks/useSections";
 import useProjects from "../hooks/useProject.js";
+import useProjectsTags from "../hooks/useProjectsTags.js";
 import useSkillsItems from "../hooks/useSkillsItems.js";
 import useSkillCategories from "../hooks/useSkillCategories.js";
 import useBriefs from '../hooks/usebriefs.js';
@@ -24,12 +25,13 @@ function HomePage() {
   const { timeline, loading: loadingTimeline } = useTimeline();
   const { sections, loading: loadingSections } = useSections();
   const { projects, loading: loadingProjects } = useProjects();
+  const { projectsTags, loading: loadingProjectsTags } = useProjectsTags();
   const {briefs, loading: loadingBriefs} = useBriefs();
   const {skillCategories, loading: loadingskillCategories} = useSkillCategories();
   const {skillsItems, loading: loadingskillsitems} = useSkillsItems();
 
 
-  const isLoading = [loadingProfil,loadingSocials,loadingTimeline,loadingSections,loadingProjects,loadingskillCategories,loadingskillsitems,loadingBriefs].some(Boolean);
+  const isLoading = [loadingProfil,loadingSocials,loadingTimeline,loadingSections,loadingProjects,loadingProjectsTags,loadingskillCategories,loadingskillsitems,loadingBriefs].some(Boolean);
 
   return (
     <div>
@@ -39,7 +41,7 @@ function HomePage() {
           <About briefs={briefs} />
           <Parcours timeline={timeline} sections={sections}/>
           <Skills skillCategories={skillCategories} skillsItems={skillsItems} />
-          <Projects projects={projects}/>
+          <Projects projects={projects} projectsTags={projectsTags}/>
           <Contacts socials={socials} />
         </main>
       </PageLoader>

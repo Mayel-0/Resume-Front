@@ -2,7 +2,7 @@ import ProjectCard from "./projectCard";
 
 import { MoveRight } from "lucide-react";
 
-function Projets({projects = []}) {
+function Projets({projects = [], projectsTags = []}) {
   return (
     <section id="projets" className="projects section shell">
       <div className="section__head">
@@ -15,7 +15,7 @@ function Projets({projects = []}) {
 
       <div className="projects__grid">
         {projects.map((project) => (
-          <ProjectCard key={project.id} project={project} />
+          <ProjectCard key={project.id} project={project} projectsTags={projectsTags} />
         ))}
       </div>
 

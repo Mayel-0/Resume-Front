@@ -1,6 +1,6 @@
 import { MoveRight } from "lucide-react";
 
-function ProjectCard({ project = []}) {
+function ProjectCard({ project = [], projectsTags = [] }) {
   return (
     <article className="project-card card">
       <a
@@ -25,25 +25,41 @@ function ProjectCard({ project = []}) {
 
         <p className="project-card__intro">{project.intro}</p>
 
-        {/* <div className="tag-list">
-          {project.tags.map((tag) => (
-            <span key={tag} className="tag">{tag}</span>
-          ))}
-        </div> */}
+        <div className="tag-list project-card__tags">
+          {projectsTags
+            .filter((item) => item.projectId === project.id)
+            .map((item) => (
+              <span className="tag" key={item.id}>
+                {item.tag}
+              </span>
+            ))}
+        </div>
 
         <div className="project-card__actions">
           <a className="btn btn--sm" href={`/ProjectsD#${project.slug}`}>
             Détails
             <MoveRight size={16} aria-hidden="true" />
           </a>
-          <a
-            className="btn btn--sm btn--ghost"
-            href={project.link}
-            target="_blank"
-            rel="noopener noreferrer"
+          {project.githubUrl && (
+            <a
+              href={project.githubUrl}
+              className="btn btn--sm btn--accent"
+              target="_blank"
+              rel="noopener noreferrer"
             >
-            {project.linkLabel}
-          </a>
+              {project.linkLabel}
+            </a>
+          )}
+          {project.liveUrl && (
+            <a
+              href={project.liveUrl}
+              className="btn btn--sm btn--accent"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {project.linkLabel}
+            </a>
+          )}
         </div>
       </div>
     </article>
