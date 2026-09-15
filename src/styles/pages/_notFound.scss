@@ -1,0 +1,65 @@
+@use '../abstracts/variables' as *;
+
+.not-found {
+  min-height: calc(100dvh - var(--header-h));
+  width: var(--shell);
+  margin-inline: auto;
+  padding-block: clamp(5rem, 12vw, 9rem) clamp(4rem, 10vw, 7rem);
+  display: grid;
+  place-items: center;
+  text-align: center;
+
+  &__content {
+    position: relative;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  &__icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--accent-line);
+    border-radius: 50%;
+    color: var(--accent);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 12px color-mix(in srgb, var(--accent) 4%, transparent);
+  }
+
+  .eyebrow {
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    max-width: 680px;
+    font-size: clamp(2.5rem, 7vw, 5.4rem);
+  }
+
+  &__message {
+    max-width: 480px;
+    margin: 1.5rem 0 2rem;
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+}
+
+@include respond-to(mobile) {
+  .not-found {
+    width: var(--phone-shell);
+    min-height: calc(100dvh - 6rem);
+    padding-block: 4rem 3rem;
+
+    h1 {
+      font-size: clamp(2.3rem, 13vw, 3.8rem);
+    }
+
+    &__message {
+      margin-top: 1.25rem;
+      font-size: 0.98rem;
+    }
+  }
+}
