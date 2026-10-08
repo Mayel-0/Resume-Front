@@ -24,6 +24,9 @@ export default function useMagnetic() {
     }
 
     const STATE = new WeakMap();
+    // WeakMap n'étant pas itérable, on suit les éléments dans un Set
+    // pour pouvoir tout réinitialiser au démontage du hook.
+    const tracked = new Set();
 
     const getProps = (el) => {
       const strength = parseFloat(el.dataset.magnetic) || 0.35;
@@ -40,6 +43,7 @@ export default function useMagnetic() {
         y: gsap.quickTo(el, "y", { duration: 0.4, ease: "power3.out" }),
       };
       STATE.set(el, { setters, strength });
+      tracked.add(el);
       gsap.to(el, { scale: 1.06, duration: 0.35, ease: "power3.out" });
     };
 
@@ -78,7 +82,12 @@ export default function useMagnetic() {
       document.removeEventListener("pointerover", onEnter);
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerout", onLeave);
-      STATE.clear();
+      // WeakMap n'a pas de .clear() : on vide via un Set de suivi
+      tracked.forEach((el) => {
+        gsap.killTweensOf(el);
+        gsap.set(el, { clearProps: "transform,scale" });
+      });
+      tracked.clear();
     };
   }, []);
 }
