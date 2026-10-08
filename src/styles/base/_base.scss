@@ -1,5 +1,6 @@
 
 @use '../abstracts/variables' as *;
+@use '../abstracts/animations' as *;
 
 @font-face {
   font-family: "Text";
@@ -18,8 +19,13 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  // Lenis pilote le scroll quand JS est actif ; on garde le
+  // smooth natif uniquement pour prefers-reduced-motion.
   overflow-x: hidden;
+
+  @include reduced-motion {
+    scroll-behavior: smooth;
+  }
 }
 
 body {

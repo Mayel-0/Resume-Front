@@ -1,19 +1,21 @@
 import { MoveRight } from "lucide-react";
+import Reveal from "./reveal";
+import SplitHeading from "./splitHeading";
 
 function Contact({socials = []}) {
   return (
     <section id="contact" className="section shell">
       <div className="contact card">
-        <div className="contact__head">
+        <Reveal className="contact__head" y={40} stagger={0.1}>
           <span className="eyebrow">Contact</span>
-          <h2>Discutons de votre projet</h2>
+          <SplitHeading as="h2">Discutons de votre projet</SplitHeading>
           <p className="section__lead">
             Disponible pour une alternance, un stage ou une collaboration. Le plus simple reste
             l'e-mail — je réponds rapidement.
           </p>
-        </div>
+        </Reveal>
 
-        <ul className="contact__links">
+        <Reveal as="ul" className="contact__links" y={34} stagger={0.1} start="top 85%">
           {socials.map((social) => (
             <li key={social.order}>
               <a href={social.href} target="_blank" rel="noopener noreferrer">
@@ -31,7 +33,7 @@ function Contact({socials = []}) {
               </a>
             </li>
           ))}
-        </ul>
+        </Reveal>
       </div>
     </section>
   );

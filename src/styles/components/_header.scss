@@ -76,6 +76,27 @@
         height: 2px;
         border-radius: 2px;
         background: var(--accent);
+        transform-origin: center;
+        animation: underline-in 0.4s var(--ease) both;
+      }
+
+      // Petit trait qui "saute" en survol, avant même l'activation
+      &:not(.is-active)::before {
+        content: "";
+        position: absolute;
+        left: 0.75rem;
+        right: 0.75rem;
+        bottom: 0.1rem;
+        height: 2px;
+        border-radius: 2px;
+        background: var(--accent-line);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.35s var(--ease);
+      }
+
+      &:not(.is-active):hover::before {
+        transform: scaleX(1);
       }
     }
   }

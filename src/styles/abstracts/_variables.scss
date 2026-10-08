@@ -22,6 +22,11 @@
   --header-h: 74px;
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  // Échelle de durées partagée
+  --dur-fast: 0.3s;
+  --dur-base: 0.6s;
+  --dur-slow: 0.9s;
 }
 
 // Définition des tailles

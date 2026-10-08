@@ -10,15 +10,21 @@
 
   position: relative;
 
-  &::before {
-    content: "";
+  // Ligne continue — élément réel (et non pseudo-élément)
+  // pour pouvoir être dessiné en scrub par GSAP.
+  &__line {
     position: absolute;
     top: 0;
     left: -2px;
     width: 3px;
     height: 100%;
     transform-origin: top;
-    background-color: var(--border);
+    background: linear-gradient(
+      180deg,
+      var(--accent),
+      color-mix(in srgb, var(--accent) 35%, transparent)
+    );
+    border-radius: 3px;
   }
 
   &__period {
@@ -46,20 +52,25 @@
     display: grid;
     grid-template-columns: 150px 1fr;
     gap: 1.5rem;
-
-    &::before {
-      content: "";
-      position: absolute;
-      left: calc(-1.6rem - 4.5px);
-      top: 0.55rem;
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
-    }
   }
 
+  // Point de la timeline — animé en GSAP (scale) puis
+  // pulse en CSS quand l'étape est "allumée".
+  &__dot {
+    position: absolute;
+    left: calc(-1.6rem - 4.5px);
+    top: 0.55rem;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  &__item.is-lit &__dot {
+    animation: dot-pulse 2.4s ease-in-out infinite;
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 24%, transparent);
+  }
 }
 
 .narrative {
@@ -92,10 +103,10 @@
 
     & li {
       display: block;
+    }
 
-      &::before {
-        left: calc(-1.25rem - 4.5px);
-      }
+    &__dot {
+      left: calc(-1.25rem - 4.5px);
     }
 
     &__period {

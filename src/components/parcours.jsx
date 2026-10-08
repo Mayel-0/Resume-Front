@@ -2,6 +2,8 @@ import { useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
+import Reveal from "./reveal";
+import SplitHeading from "./splitHeading";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -12,23 +14,66 @@ function Parcours({timeline = [], sections = []}) {
     () => {
       if (!timeline.length) return;
 
-      gsap.utils.toArray(".timeline__item").forEach((item) => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+      // 1. La ligne de la timeline se DÉSSINE au fil du scroll (scrub)
+      const line = containerRef.current?.querySelector(".timeline__line");
+      if (line) {
         gsap.fromTo(
-          item,
-          { opacity: 0, x: 100 },
+          line,
+          { scaleY: 0 },
           {
-            opacity: 1,
-            x: 0,
-            duration: 1,
-            ease: "power2.out",
+            scaleY: 1,
+            ease: "none",
             scrollTrigger: {
-              trigger: item,
-              start: "top 65%",
-              toggleActions: "play none none reverse",
-              markers: false,
+              trigger: containerRef.current,
+              start: "top 70%",
+              end: "bottom 75%",
+              scrub: 0.6,
             },
           }
         );
+      }
+
+      // 2. Chaque étape entre en scène + son point s'allume
+      gsap.utils.toArray(".timeline__item", containerRef.current).forEach((item) => {
+        gsap.fromTo(
+          item,
+          { opacity: 0, x: 70 },
+          {
+            opacity: 1,
+            x: 0,
+            duration: 0.9,
+            ease: "power3.out",
+            scrollTrigger: {
+              trigger: item,
+              start: "top 68%",
+              toggleActions: "play none none reverse",
+              markers: false,
+              onEnter: () => item.classList.add("is-lit"),
+              onLeaveBack: () => item.classList.remove("is-lit"),
+            },
+          }
+        );
+
+        // Le point pulse quand il s'allume
+        const dot = item.querySelector(".timeline__dot");
+        if (dot) {
+          gsap.fromTo(
+            dot,
+            { scale: 0 },
+            {
+              scale: 1,
+              duration: 0.6,
+              ease: "back.out(2.5)",
+              scrollTrigger: {
+                trigger: item,
+                start: "top 68%",
+                toggleActions: "play none none reverse",
+              },
+            }
+          );
+        }
       });
     },
     { scope: containerRef, dependencies: [timeline] }
@@ -36,14 +81,17 @@ function Parcours({timeline = [], sections = []}) {
 
   return (
     <section id="parcours" className="section shell">
-      <div className="section__head">
+      <Reveal className="section__head" y={24} stagger={0.12}>
         <span className="section__index">02</span>
-        <h2>Parcours et expériences</h2>
-      </div>
+        <SplitHeading as="h2">Parcours et expériences</SplitHeading>
+      </Reveal>
 
       <ol className="timeline" ref={containerRef}>
+        {/* Ligne continue animée en scrub (remplace ::before statique) */}
+        <span className="timeline__line" aria-hidden="true" />
         {timeline.map((item) => (
           <li className="timeline__item" key={item.order}>
+            <span className="timeline__dot" aria-hidden="true" />
             <span className="timeline__period">{item.period}</span>
             <div className="timeline__body">
               <h3>{item.title}</h3>
@@ -54,7 +102,7 @@ function Parcours({timeline = [], sections = []}) {
         ))}
       </ol>
 
-      <div className="narrative">
+      <Reveal className="narrative" y={54} stagger={0.13} start="top 80%">
         {sections.map((section) => (
           <article
             id={section.sectionId}
@@ -66,7 +114,7 @@ function Parcours({timeline = [], sections = []}) {
             <p dangerouslySetInnerHTML={{ __html: section.html }} />
           </article>
         ))}
-      </div>
+      </Reveal>
     </section>
   );
 }

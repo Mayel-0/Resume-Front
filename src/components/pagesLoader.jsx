@@ -4,19 +4,27 @@ export default function PageLoader({ loading, children }) {
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   const [isContentVisible, setIsContentVisible] = useState(false);
 
-  useEffect(() => {
-    if (!loading) {
-      const contentTimer = setTimeout(() => setIsContentVisible(true), 350);
-      const overlayTimer = setTimeout(() => setIsOverlayVisible(false), 1300);
-
-      return () => {
-        clearTimeout(contentTimer);
-        clearTimeout(overlayTimer);
-      };
-    } else {
+  // Reset du state quand `loading` repasse à true — ajustement
+  // pendant le render (pattern React recommandé, pas dans un effet).
+  const [prevLoading, setPrevLoading] = useState(loading);
+  if (prevLoading !== loading) {
+    setPrevLoading(loading);
+    if (loading) {
       setIsOverlayVisible(true);
       setIsContentVisible(false);
     }
+  }
+
+  useEffect(() => {
+    if (loading) return undefined;
+
+    const contentTimer = setTimeout(() => setIsContentVisible(true), 350);
+    const overlayTimer = setTimeout(() => setIsOverlayVisible(false), 1300);
+
+    return () => {
+      clearTimeout(contentTimer);
+      clearTimeout(overlayTimer);
+    };
   }, [loading]);
 
   return (

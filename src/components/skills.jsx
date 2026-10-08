@@ -1,17 +1,29 @@
+import Reveal from "./reveal";
+import SplitHeading from "./splitHeading";
+
 function Skills({skillCategories = [], skillsItems = []}) {
   return (
     <section id="competences" className="section shell">
-      <div className="section__head">
+      <Reveal className="section__head" y={24} stagger={0.12}>
         <span className="section__index">03</span>
-        <h2>Compétences</h2>
-      </div>
-      <p className="section__lead">
-        Les technologies que j'utilise au quotidien dans mes projets d'école et personnels.
-      </p>
+        <SplitHeading as="h2">Compétences</SplitHeading>
+      </Reveal>
+      <Reveal y={30}>
+        <p className="section__lead">
+          Les technologies que j'utilise au quotidien dans mes projets d'école et personnels.
+        </p>
+      </Reveal>
 
       <div className="skills">
-        {skillCategories.map((category) => (
-          <article className="card" key={category.order}>
+        {skillCategories.map((category, i) => (
+          <Reveal
+            as="article"
+            className="card"
+            key={category.order}
+            y={44}
+            delay={i * 0.08}
+            start="top 85%"
+          >
             <h3>{category.title}</h3>
             <div className="tag-list">
               {skillsItems
@@ -22,7 +34,7 @@ function Skills({skillCategories = [], skillsItems = []}) {
                   </span>
                 ))}
             </div>
-          </article>
+          </Reveal>
         ))}
       </div>
     </section>

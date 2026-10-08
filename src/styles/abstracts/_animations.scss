@@ -1,0 +1,142 @@
+// ============================================================
+// Fondations d'animation partagées — clé pour tout le site
+// =================================================-----------
+
+// --- Mixins -------------------------------------------------
+
+// Utilisation : @include reduced-motion { ... }
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+// Coupe toutes les animations CSS pour les utilisateurs
+// sensibles au mouvement.
+@include reduced-motion {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+// --- Keyframes partagés -------------------------------------
+
+// Entrée du portrait du hero (le style l'appelait déjà mais
+// le keyframes n'existait pas → animation ignorée par le navigateur)
+@keyframes portrait-in {
+  from {
+    opacity: 0;
+    transform: translateY(48px) scale(0.94);
+    filter: blur(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+// Respiration du halo derrière le portrait
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.06);
+  }
+}
+
+// Flottement léger (portrait, éléments décoratifs)
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+// Balayage lumineux sur les boutons accentués
+@keyframes shine-sweep {
+  from {
+    transform: translateX(-130%);
+  }
+  to {
+    transform: translateX(230%);
+  }
+}
+
+// Apparition en fondu + montée (menu mobile, listes…)
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Entrée des liens du menu mobile, en cascade
+@keyframes menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Le loader s'écarte en rideau plutôt que de disparaître
+@keyframes curtain-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-101%);
+  }
+}
+
+// Pulsation du point actif de la timeline
+@keyframes dot-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+}
+
+// Soulignement du lien actif du header, qui se déploie
+@keyframes underline-in {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+// Rotation douce du halo (fond du hero)
+@keyframes halo-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-3%, -4%, 0) scale(1.08);
+  }
+}

@@ -1,6 +1,8 @@
 import { Download, Menu, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 
 function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -8,10 +10,69 @@ function Header() {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
   const isProjectsPage = location.pathname === "/ProjectsD";
+  const headerRef = useRef(null);
+  const navRef = useRef(null);
+  const isFirstRender = useRef(true);
+
+  // Entrée du header au chargement de l'app
+  useGSAP(
+    () => {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      gsap.from(headerRef.current, {
+        y: -80,
+        opacity: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        delay: 0.1,
+      });
+    },
+    { scope: headerRef }
+  );
+
+  // Menu mobile : ouverture en cascade GSAP
+  useGSAP(
+    () => {
+      if (isFirstRender.current) {
+        isFirstRender.current = false;
+        return;
+      }
+      const links = navRef.current?.querySelectorAll("a");
+      if (!links?.length) return;
+
+      if (isMenuOpen) {
+        gsap.fromTo(
+          links,
+          { opacity: 0, y: -14, scale: 0.96 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.45,
+            stagger: 0.05,
+            ease: "back.out(1.7)",
+            overwrite: true,
+          }
+        );
+        gsap.fromTo(
+          navRef.current,
+          { opacity: 0, y: -10 },
+          { opacity: 1, y: 0, duration: 0.35, ease: "power2.out", overwrite: true }
+        );
+      }
+    },
+    { scope: headerRef, dependencies: [isMenuOpen] }
+  );
+
+  // Reset de la section active quand on quitte la home — ajustement
+  // pendant le render (voir aussi PageLoader), pas dans l'effet.
+  const [prevIsHomePage, setPrevIsHomePage] = useState(isHomePage);
+  if (prevIsHomePage !== isHomePage) {
+    setPrevIsHomePage(isHomePage);
+    if (!isHomePage) setActiveSection("");
+  }
 
   useEffect(() => {
     if (!isHomePage) {
-      setActiveSection("");
       return undefined;
     }
 
@@ -71,14 +132,14 @@ function Header() {
   };
 
   return (
-    <header className="header">
+    <header className="header" ref={headerRef}>
       <div className="header__inner">
         <a className="header__brand" href="/">
           <span>ML</span>
           <span>Maël LLADO</span>
         </a>
 
-        <nav id="main-navigation" className={`header__nav${isMenuOpen ? " header__nav--open" : ""}`} aria-label="Navigation principale">
+        <nav ref={navRef} id="main-navigation" className={`header__nav${isMenuOpen ? " header__nav--open" : ""}`} aria-label="Navigation principale">
           <a
           href="/#apropos"
           className={isHomePage && activeSection === "apropos" ? "is-active" : ""}
@@ -118,7 +179,7 @@ function Header() {
         </nav>
 
         <div>
-          <a className="header__cv" onClick={handleDownload} aria-label="...">
+          <a className="header__cv" onClick={handleDownload} aria-label="..." data-magnetic="0.25">
             <Download size={16} aria-hidden="true" />
             Télécharger le CV
           </a>

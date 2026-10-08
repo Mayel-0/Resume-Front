@@ -1,5 +1,3 @@
-import { useRef } from "react";
-
 function ProjectArticle({projects = [], projectsTags = [], projectsStack = []}) {
   return (
     <article id={projects.slug} className="card projectD-article">
