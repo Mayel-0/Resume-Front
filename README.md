@@ -17,52 +17,51 @@ Ce dépôt est la **partie frontend** d'un projet découpé en trois repos disti
 Client
   │
   ▼
-Cloudflare  ◄─── CDN, DDoS protection, SSL, masquage IP
+Cloudflare  ◄─── CDN, protection DDoS, SSL, masquage IP
   │
   ▼
 Oracle Cloud (Ubuntu)
   │
-  Nginx ─── Reverse Proxy
-  │         ├── mael-llado.com        → Frontend (dist Vite statique)
-  │         ├── mael-llado.com/api    → Backend Node.js
-  │         └── admin.mael-llado.com  → Panel Admin
+  Nginx ─── Reverse proxy vers les conteneurs Docker
+  │         ├── mael-llado.com        → conteneur front  (build Vite servi par Nginx)  ◄── ce repo
+  │         ├── mael-llado.com/api    → conteneur back   (Node.js)
+  │         └── admin.mael-llado.com  → conteneur admin  (build Vite servi par Nginx)
   │
-  └── PostgreSQL  ◄─── Toutes les données (textes, projets, images, documents)
+  └── conteneur db ─── PostgreSQL 17, données dans un volume Docker
 ```
 
 > Le client ne communique jamais directement avec le serveur Oracle.
-> Cloudflare intercepte chaque requête et la relaie, ce qui masque l'IP réelle du serveur
-> (un `ping mael-llado.com` renvoie une IP Cloudflare, pas l'IP Oracle).
+> Cloudflare intercepte chaque requête et la relaie, ce qui masque l'IP réelle du serveur.
 
 ---
 
-## Frontend — Resume-Front
+## Présentation
 
-### Présentation
+Interface **React 19** écrite en **TypeScript** (mode `strict`). Elle récupère tout son contenu dynamique auprès de l'API (textes, projets, images, CV) et le met en scène avec des animations **GSAP** synchronisées sur un scroll fluide **Lenis**.
 
-Interface React du portfolio. Elle consomme l'API backend pour récupérer **l'intégralité des données dynamiques** (textes, projets, images, documents PDF) et les affiche via des composants organisés par section.
-
-Le site expose deux routes publiques :
-
-| Route        | Page                                         |
-| ------------ | -------------------------------------------- |
-| `/`          | `HomePage` — présentation générale           |
-| `/projectsD` | `ProjectsPage` — liste et détail des projets |
+| Route        | Page                                                  |
+| ------------ | ----------------------------------------------------- |
+| `/`          | `HomePage` — présentation, parcours, projets, contact |
+| `/ProjectsD` | `ProjectD` — détail de chaque projet, avec filtres    |
+| `*`          | `NotFound` — page 404                                 |
 
 ---
 
 ## Stack technique
 
-| Catégorie     | Technologie            | Version |
-| ------------- | ---------------------- | ------- |
-| Framework UI  | React                  | 19      |
-| Bundler       | Vite                   | 8       |
-| Routing       | React Router DOM       | 7       |
-| Animations    | GSAP + `@gsap/react`   | 3.15    |
-| Scroll smooth | Lenis                  | 1.3     |
-| Icônes        | Lucide React           | 1.37    |
-| CSS           | Sass (SCSS)            | 1.103   |
-| Linting       | ESLint + plugins React | 10      |
+| Catégorie        | Technologie                     | Version |
+| ---------------- | ------------------------------- | ------- |
+| Langage          | TypeScript (strict)             | 6       |
+| Framework UI     | React                           | 19      |
+| Bundler          | Vite                            | 8       |
+| Routing          | React Router DOM                | 7       |
+| Animations       | GSAP + `@gsap/react`            | 3.15    |
+| Scroll fluide    | Lenis                           | 1.3     |
+| Découpe de texte | SplitType                       | 0.3     |
+| Icônes           | Lucide React                    | 1.37    |
+| CSS              | Sass (SCSS)                     | 1.103   |
+| Linting          | ESLint + typescript-eslint      | 10      |
+| Conteneurisation | Docker (build Vite → Nginx)     | —       |
 
 ---
 
@@ -70,155 +69,170 @@ Le site expose deux routes publiques :
 
 ```
 Resume-Front/
-├── public/                  # Assets statiques (favicon, etc.)
+├── public/                  # Fichiers statiques (favicon, robots.txt, sitemap.xml)
 ├── src/
-│   ├── main.jsx             # Point d'entrée React + Router
-│   ├── pages/
-│   │   ├── HomePage.jsx     # Page "/" — orchestre les hooks et passe les données en props
-│   │   └── ProjectsPage.jsx # Page "/projectsD"
-│   ├── components/          # Composants UI par section (Hero, About, Parcours, Contact…)
-│   ├── hooks/               # Hooks personnalisés — appels API centralisés
-│   └── assets/              # Images locales, fonts
-├── .env                     # Variables d'environnement (développement)
-├── .env.production          # Variables d'environnement (production)
-├── vite.config.js
-├── eslint.config.js
-└── index.html
+│   ├── main.tsx             # Point d'entrée : routeur + rideau de transition
+│   ├── App.tsx              # Header, routes, footer, effets globaux
+│   ├── pages/               # HomePage, ProjectD, NotFound
+│   ├── components/          # Sections (hero, about, projects…) et briques d'animation
+│   ├── context/             # Preloader et transitions entre les pages
+│   ├── hooks/               # useApi, useSmoothScroll, useMagnetic, useTilt
+│   ├── lib/                 # Appels API avec cache, instance Lenis, plugins GSAP
+│   ├── models/              # Types des données renvoyées par l'API
+│   ├── styles/              # SCSS : abstracts/, base/, components/, pages/
+│   └── assets/              # Polices et images
+├── index.html
+├── nginx.conf               # Configuration du Nginx embarqué dans l'image Docker
+├── Dockerfile
+├── tsconfig.json
+└── vite.config.ts
 ```
+
+### Des données typées de bout en bout
+
+Les modèles de `src/models/` décrivent ce que renvoie chaque endpoint. Le hook `useApi` en déduit son type de retour à partir de l'URL :
+
+```ts
+const projects = useApi("/api/projects"); // → { data: Project[], loading, error }
+const socials = useApi("/api/socials"); //   → { data: Social[],  loading, error }
+
+useApi("/api/projets"); // ✗ ne compile pas : l'endpoint n'existe pas
+```
+
+Les réponses sont mises en cache en mémoire : chaque endpoint n'est appelé qu'une fois, même en naviguant d'une page à l'autre.
 
 ### Logique parent → enfant
 
-Chaque **page** agit comme un orchestrateur :
-
-1. Elle appelle les **hooks personnalisés** (`useProjets`, `useSkills`, etc.) qui font les requêtes vers l'API.
-2. Un composant `PageLoader` gère l'état de chargement global.
-3. Une fois les données prêtes, elles sont transmises en **props** aux composants enfants (sections).
-4. Les composants affichent les données via `.map()` et `.filter()` — aucun composant enfant ne fait d'appel réseau directement.
+Chaque **page** orchestre le chargement, les composants ne font aucun appel réseau :
 
 ```
-Page (HomePage / ProjectsPage)
-  ├── appelle les hooks → fetch vers mael-llado.com/api
-  ├── PageLoader (gère loading / error)
+Page (HomePage / ProjectD)
+  ├── useApi(...)            → données typées, en cache
+  ├── usePageReady(...)      → signale que la page peut être révélée
   └── transmet les données en props
-        ├── <Hero data={hero} />
-        ├── <About data={about} />
-        ├── <Parcours data={parcours} />
-        ├── <Projects data={projects} />
-        └── <Contact data={contact} />
+        ├── <Hero profil socials />
+        ├── <About briefs />
+        ├── <Parcours timeline sections />
+        ├── <Skills skillCategories skillsItems />
+        ├── <Projects projects projectsTags />
+        └── <Contacts socials />
 ```
 
----
-
-## Styles & conventions CSS
-
-Méthodologie **BEM** (Block Element Modifier) appliquée sur l'ensemble des fichiers SCSS.
-
-```scss
-/* Exemple de nommage BEM */
-.hero {
-} /* Block */
-.hero__title {
-} /* Element */
-.hero__title--highlight {
-} /* Modifier */
-```
-
-Organisation des fichiers — un fichier SCSS dédié par page et par composant :
-
-```
-src/
-├── pages/
-│   ├── HomePage.scss
-│   └── ProjectsPage.scss
-└── components/
-    ├── Hero.scss
-    ├── About.scss
-    ├── Parcours.scss
-    └── Contact.scss
-```
-
-Compilé via le plugin **Sass** de Vite, sans aucun framework CSS externe.
+Si l'API ne répond pas, une page d'erreur avec un bouton « Réessayer » remplace le contenu.
 
 ---
 
 ## Animations
 
-- **GSAP ScrollTrigger** — animations déclenchées au scroll (entrées de sections, révélations)
-- **Lenis** — scroll smooth natif, remplace le scroll navigateur par défaut
+| Effet                    | Description                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| Preloader                | Rideau en cinq volets avec compteur, levé quand les données sont prêtes                        |
+| Transitions de page      | Le même rideau recouvre l'écran entre deux pages, sans rechargement                            |
+| Hero                     | Prénom en « scramble », nom lettre par lettre en 3D, halos réactifs à la souris, parallaxe     |
+| Bandeaux défilants       | Compétences en boucle infinie, accélérées par la vitesse du scroll                             |
+| À propos                 | Le texte s'allume mot par mot au rythme du scroll                                              |
+| Parcours                 | La ligne de la timeline se dessine pendant le défilement                                       |
+| Projets                  | Section figée et défilement horizontal des cartes (desktop), grille classique sur mobile       |
+| Cartes                   | Halo lumineux qui suit le curseur, inclinaison 3D                                              |
+| Curseur                  | Point et anneau avec inertie, libellé contextuel sur les projets                               |
+| Header                   | Barre de progression de lecture, masquage à la descente                                        |
 
-> Le site est prévu pour évoluer vers une expérience très animée dans une prochaine itération.
+**Organisation du code d'animation :**
+
+- `context/TransitionProvider.tsx` pilote le rideau et indique aux pages quand lancer leurs entrées (`revealed`).
+- `components/reveal.tsx` et `components/splitHeading.tsx` sont les briques réutilisables de révélation au scroll.
+- `hooks/useSmoothScroll.ts` branche Lenis sur le ticker GSAP : une seule boucle d'animation, `ScrollTrigger` toujours synchronisé.
+- `components/transitionLink.tsx` remplace les liens internes : transition vers une autre page, ou scroll vers une ancre.
+
+**Accessibilité** — avec `prefers-reduced-motion`, toutes les animations sont désactivées : pas de rideau animé, pas de scroll fluide, pas de section figée, et le contenu reste entièrement lisible. Les effets de survol ne s'activent que sur les appareils dotés d'un vrai curseur.
+
+---
+
+## Styles & conventions CSS
+
+Méthodologie **BEM** sur l'ensemble des fichiers SCSS, sans framework CSS externe.
+
+```scss
+.hero {
+} /* Block */
+.hero__title {
+} /* Element */
+.btn--accent {
+} /* Modifier */
+```
+
+```
+src/styles/
+├── main.scss            # Point d'entrée, importe tout le reste
+├── abstracts/           # Variables (couleurs, breakpoints), keyframes partagés
+├── base/                # Reset, typographie, utilitaires (.btn, .card, .tag)
+├── components/          # Un fichier par composant (_hero.scss, _projects.scss…)
+└── pages/               # Un fichier par page
+```
 
 ---
 
 ## Variables d'environnement
 
-Créer un fichier `.env` à la racine avant de lancer le projet :
+Créer un fichier `.env` à la racine :
 
 ```dotenv
-VITE_API_URL=https://mael-llado.com/api
+VITE_API_URL=https://mael-llado.com
 ```
 
-| Variable       | Description                  |
-| -------------- | ---------------------------- |
-| `VITE_API_URL` | URL de base de l'API backend |
+| Variable       | Description                                                   |
+| -------------- | ------------------------------------------------------------- |
+| `VITE_API_URL` | URL de base du back, **sans** `/api` (le code l'ajoute)       |
 
-> En production, le fichier `.env.production` est utilisé automatiquement par Vite lors du `build`.
+> Pour développer avec un back local : `VITE_API_URL=http://localhost:3000`.
+> La valeur est figée dans le bundle au moment du build.
 
 ---
 
 ## Installation & développement
 
 ```bash
-# Cloner le repo
 git clone https://github.com/Mayel-0/Resume-Front.git
 cd Resume-Front
-
-# Installer les dépendances
 npm install
 
-# Créer le fichier d'environnement
-cp .env.example .env
-# puis renseigner VITE_API_URL
-
-# Lancer le serveur de développement
+# Créer le fichier .env (voir ci-dessus), puis :
 npm run dev
 ```
 
 ## Scripts disponibles
 
-| Commande          | Description                             |
-| ----------------- | --------------------------------------- |
-| `npm run dev`     | Serveur de développement Vite avec HMR  |
-| `npm run build`   | Build de production → dossier `dist/`   |
-| `npm run preview` | Prévisualisation du build de production |
-| `npm run lint`    | Analyse statique ESLint                 |
+| Commande            | Description                                             |
+| ------------------- | ------------------------------------------------------- |
+| `npm run dev`       | Serveur de développement Vite avec HMR                  |
+| `npm run build`     | Vérification des types, puis build → `dist/`            |
+| `npm run typecheck` | Vérification des types seule                            |
+| `npm run lint`      | Analyse statique ESLint                                 |
+| `npm run preview`   | Prévisualisation du build de production                 |
 
 ---
 
 ## Déploiement
 
-Le build de production est généré avec Vite et servi **statiquement** par Nginx sur la machine Oracle Cloud.
+Le site est livré dans une **image Docker** construite en deux étapes : build Vite, puis Nginx qui sert le dossier `dist/`.
 
 ```bash
-npm run build
-# → génère dist/
+docker build -t resume-front .
+docker run -d -p 127.0.0.1:8080:80 resume-front
 
-# Copier dist/ vers le répertoire servi par Nginx
-# ex: /var/www/mael-llado.com/html/
+# Autre URL d'API :
+docker build --build-arg VITE_API_URL=https://exemple.com -t resume-front .
 ```
 
-Nginx est configuré pour servir `dist/index.html` sur toutes les routes (SPA fallback) et router `/api` vers le backend Node.js.
+Le Nginx embarqué (`nginx.conf`) renvoie `index.html` pour toutes les routes (React Router prend le relais), met les fichiers hashés en cache pour un an et ne met jamais `index.html` en cache, pour qu'un nouveau déploiement soit visible immédiatement.
+
+En production, un `docker-compose.yml` lance ce conteneur avec l'API, le panneau admin et la base de données. Le Nginx du serveur relaie `mael-llado.com` vers lui.
 
 ---
 
 ## SEO & métadonnées
 
-Le `index.html` embarque les balises meta essentielles :
-
-- `description` — résumé du profil
-- `author`
-- **Open Graph** — aperçu lors du partage du lien (`og:title`, `og:description`, `og:url`)
-- `lang="fr"`
+Le `index.html` embarque les balises essentielles : `description`, `author`, **Open Graph** (`og:title`, `og:description`, `og:url`) et `lang="fr"`. `robots.txt` et `sitemap.xml` sont servis depuis `public/`.
 
 ---
 
