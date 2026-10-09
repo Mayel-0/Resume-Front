@@ -4,6 +4,34 @@
   border-top: 1px solid var(--border);
   padding-block: 2.2rem;
   margin-top: 2rem;
+  overflow: hidden;
+  background: var(--bg);
+
+  // Nom géant en contour, révélé lettre par lettre (footer.jsx)
+  &__giant {
+    width: var(--shell);
+    margin: 0 auto clamp(1.25rem, 3vw, 2.5rem);
+    overflow: hidden;
+    font-family: "Titre", sans-serif;
+    font-weight: 700;
+    // Dimensionné pour que les 10 lettres tiennent dans la largeur du shell
+    font-size: clamp(2.1rem, 10.4vw, 9.5rem);
+    // Hauteur de ligne généreuse : le tréma du Ë ne doit pas être rogné
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    text-align: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+    // Contour + remplissage couleur de fond (voir _marquee.scss)
+    color: var(--bg);
+    -webkit-text-stroke: 2px color-mix(in srgb, var(--accent) 55%, var(--bg));
+    paint-order: stroke fill;
+
+    .char {
+      will-change: transform;
+    }
+  }
+
   &__inner {
     width: var(--shell);
     margin-inline: auto;

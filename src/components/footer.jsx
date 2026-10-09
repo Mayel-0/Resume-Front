@@ -1,31 +1,52 @@
+import { useRef } from "react";
+import SplitType from "split-type";
+import { gsap, useGSAP, prefersReducedMotion } from "../lib/gsap";
+import { CV_URL, CV_FILENAME } from "../lib/api";
+
 function Footer() {
   const year = new Date().getFullYear();
+  const footerRef = useRef(null);
+  const giantRef = useRef(null);
 
-  const handleDownload = async () => {
-    const url = `${import.meta.env.VITE_API_URL}/documents/Cv_Mael_llado.pdf`;
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
+  // Le nom géant monte lettre par lettre en arrivant en bas de page
+  useGSAP(
+    () => {
+      if (prefersReducedMotion()) return;
 
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = "CV_Mael_Llado.pdf";
-    a.click();
+      const split = new SplitType(giantRef.current, { types: "chars" });
 
-    URL.revokeObjectURL(blobUrl);
-  };
+      gsap.fromTo(
+        split.chars,
+        { yPercent: 110 },
+        {
+          yPercent: 0,
+          ease: "power2.out",
+          stagger: 0.06,
+          scrollTrigger: {
+            trigger: footerRef.current,
+            start: "top 96%",
+            end: "bottom bottom",
+            scrub: 0.6,
+          },
+        }
+      );
+
+      return () => split.revert();
+    },
+    { scope: footerRef }
+  );
 
   return (
-    <footer className="footer">
+    <footer className="footer" ref={footerRef}>
+      <p className="footer__giant" ref={giantRef} aria-hidden="true">Maël Llado</p>
+
       <div className="footer__inner">
         <p>© {year} Maël LLADO — Bordeaux, France</p>
         <div className="footer__links">
           <a href="https://www.linkedin.com/in/llado-mael-54008a384/" target="_blank" rel="noopener noreferrer">Linkedin</a>
           <a href="https://github.com/Mayel-0" target="_blank" rel="noopener noreferrer">Github</a>
-          <a href="mailto:llado.mael33@gmail.com" target="_blank" rel="noopener noreferrer">Gmail</a>
-          <a onClick={handleDownload} aria-label="...">
-          CV
-          </a>
+          <a href="mailto:llado.mael33@gmail.com">Gmail</a>
+          <a href={CV_URL} download={CV_FILENAME}>CV</a>
         </div>
       </div>
     </footer>

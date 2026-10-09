@@ -1,9 +1,7 @@
 import { useEffect } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Lenis from "lenis";
-
-gsap.registerPlugin(ScrollTrigger);
+import { gsap, ScrollTrigger, prefersReducedMotion } from "../lib/gsap";
+import { setLenis } from "../lib/lenis";
 
 /**
  * useSmoothScroll — Lenis (scroll smooth) synchronisé avec GSAP.
@@ -13,22 +11,21 @@ gsap.registerPlugin(ScrollTrigger);
  *   animations de scroll restent parfaitement synchronisées.
  * - Respecte prefers-reduced-motion : dans ce cas, on garde le
  *   scroll natif du navigateur.
- * - Les liens d'ancre (#section) sont gérés par Lenis.
+ * - Les ancres sont gérées par TransitionLink (lib/lenis.js).
  */
 export default function useSmoothScroll() {
   useEffect(() => {
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
+    // Les polices changent la hauteur des blocs : on recalcule une fois chargées
+    document.fonts?.ready.then(() => ScrollTrigger.refresh());
 
-    if (prefersReduced) return undefined;
+    if (prefersReducedMotion()) return undefined;
 
     const lenis = new Lenis({
       duration: 1.15,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      anchors: true,
     });
+    setLenis(lenis);
 
     // Lenis → ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
@@ -43,6 +40,7 @@ export default function useSmoothScroll() {
     return () => {
       gsap.ticker.remove(raf);
       lenis.destroy();
+      setLenis(null);
     };
   }, []);
 }

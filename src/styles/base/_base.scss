@@ -21,7 +21,9 @@
 html {
   // Lenis pilote le scroll quand JS est actif ; on garde le
   // smooth natif uniquement pour prefers-reduced-motion.
-  overflow-x: hidden;
+  // clip (et non hidden) : ne crée pas de conteneur de scroll, ce qui
+  // casserait le pin de ScrollTrigger.
+  overflow-x: clip;
 
   @include reduced-motion {
     scroll-behavior: smooth;
@@ -37,18 +39,24 @@ body {
   background-color: var(--bg);
   background-image: radial-gradient(70rem 40rem at 78% -8%, var(--accent-soft), transparent 62%), radial-gradient(50rem 34rem at 0% 12%, rgba(255, 255, 255, 0.045), transparent 60%), linear-gradient(180deg, var(--bg-2), var(--bg) 55%);
   font-family: "Text", sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
+
+  // Grain discret par-dessus toute la page
+  &::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 220px 220px;
+  }
 }
 
 main {
   padding-top: calc(var(--header-h) - 1rem);
-}
-
-@include respond-to(tablet) {
-  html,
-  body {
-    overflow-x: hidden;
-  }
 }
 
 

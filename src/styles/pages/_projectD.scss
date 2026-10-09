@@ -1,10 +1,15 @@
 @use '../abstracts/variables' as *;
 
-.projetD {
+.projectD {
   padding-block: clamp(2.5rem, 6vw, 4.5rem) 2rem;
   &__head {
-    max-width: 760px;
     margin-bottom: clamp(2.5rem, 5vw, 4rem);
+
+    // Le bloc suit la grille du site ; seul le texte est limité en largeur
+    > * {
+      max-width: 760px;
+    }
+
     h1 {
       font-size: clamp(2.2rem, 5vw, 3.4rem);
       margin-top: 1rem;
@@ -26,7 +31,7 @@
 }
 
 @include respond-to(tablet) {
-  .projetD {
+  .projectD {
     padding-block: 2.5rem 1.5rem;
 
     &__head {
@@ -40,7 +45,7 @@
 }
 
 @include respond-to(mobile) {
-  .projetD {
+  .projectD {
     padding-block: 1.5rem 1rem;
 
     &__head {

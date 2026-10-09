@@ -14,16 +14,9 @@ function Skills({skillCategories = [], skillsItems = []}) {
         </p>
       </Reveal>
 
-      <div className="skills">
-        {skillCategories.map((category, i) => (
-          <Reveal
-            as="article"
-            className="card"
-            key={category.order}
-            y={44}
-            delay={i * 0.08}
-            start="top 85%"
-          >
+      <Reveal className="skills" y={60} stagger={0.1} start="top 85%">
+        {skillCategories.map((category) => (
+          <article className="card" key={category.id} data-tilt>
             <h3>{category.title}</h3>
             <div className="tag-list">
               {skillsItems
@@ -34,9 +27,9 @@ function Skills({skillCategories = [], skillsItems = []}) {
                   </span>
                 ))}
             </div>
-          </Reveal>
+          </article>
         ))}
-      </div>
+      </Reveal>
     </section>
   );
 }

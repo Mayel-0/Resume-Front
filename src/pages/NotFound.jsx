@@ -1,17 +1,18 @@
 import { ArrowLeft, Compass } from "lucide-react";
-import { Link } from "react-router-dom";
 import { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-
-gsap.registerPlugin(useGSAP);
+import { gsap, useGSAP, prefersReducedMotion } from "../lib/gsap";
+import { usePageReady, useTransition } from "../context/transitionContext";
+import TransitionLink from "../components/transitionLink";
 
 function Notfound() {
   const containerRef = useRef(null);
+  const { revealed } = useTransition();
+
+  usePageReady(true);
 
   useGSAP(
     () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (!revealed || prefersReducedMotion()) return;
 
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
@@ -47,7 +48,7 @@ function Notfound() {
         delay: 1.2,
       });
     },
-    { scope: containerRef }
+    { scope: containerRef, dependencies: [revealed], revertOnUpdate: true }
   );
 
   return (
@@ -62,10 +63,10 @@ function Notfound() {
           L’adresse demandée n’existe pas ou n’est plus disponible. Revenez à
           l’accueil pour poursuivre votre visite.
         </p>
-        <Link className="btn btn--accent" to="/" data-magnetic="0.3">
+        <TransitionLink className="btn btn--accent" to="/" data-magnetic="0.3">
           <ArrowLeft size={17} aria-hidden="true" />
           Retour à l’accueil
-        </Link>
+        </TransitionLink>
       </div>
     </main>
   );

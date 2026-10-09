@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import gsap from "gsap";
+import { gsap, prefersReducedMotion, canHover } from "../lib/gsap";
 
 /**
  * useMagnetic — effet magnétique sur tous les éléments marqués
@@ -14,30 +14,19 @@ import gsap from "gsap";
  */
 export default function useMagnetic() {
   useEffect(() => {
-    const prefersReduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-
     // Pas d'effet sur écran tactile : le curseur n'existe pas
-    if (prefersReduced || !window.matchMedia("(hover: hover)").matches) {
-      return undefined;
-    }
+    if (prefersReducedMotion() || !canHover()) return undefined;
 
     const STATE = new WeakMap();
     // WeakMap n'étant pas itérable, on suit les éléments dans un Set
     // pour pouvoir tout réinitialiser au démontage du hook.
     const tracked = new Set();
 
-    const getProps = (el) => {
-      const strength = parseFloat(el.dataset.magnetic) || 0.35;
-      return { strength };
-    };
-
     const onEnter = (e) => {
       const el = e.target.closest?.("[data-magnetic]");
       if (!el || STATE.has(el)) return;
 
-      const { strength } = getProps(el);
+      const strength = parseFloat(el.dataset.magnetic) || 0.35;
       const setters = {
         x: gsap.quickTo(el, "x", { duration: 0.4, ease: "power3.out" }),
         y: gsap.quickTo(el, "y", { duration: 0.4, ease: "power3.out" }),
@@ -63,7 +52,8 @@ export default function useMagnetic() {
 
     const onLeave = (e) => {
       const el = e.target.closest?.("[data-magnetic]");
-      if (!el) return;
+      // pointerout se déclenche aussi entre deux enfants : on ignore
+      if (!el || el.contains(e.relatedTarget)) return;
       STATE.delete(el);
       gsap.to(el, {
         x: 0,

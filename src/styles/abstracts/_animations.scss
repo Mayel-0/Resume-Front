@@ -26,45 +26,6 @@
 
 // --- Keyframes partagés -------------------------------------
 
-// Entrée du portrait du hero (le style l'appelait déjà mais
-// le keyframes n'existait pas → animation ignorée par le navigateur)
-@keyframes portrait-in {
-  from {
-    opacity: 0;
-    transform: translateY(48px) scale(0.94);
-    filter: blur(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
-}
-
-// Respiration du halo derrière le portrait
-@keyframes glow-pulse {
-  0%,
-  100% {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.95;
-    transform: scale(1.06);
-  }
-}
-
-// Flottement léger (portrait, éléments décoratifs)
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-14px);
-  }
-}
-
 // Balayage lumineux sur les boutons accentués
 @keyframes shine-sweep {
   from {
@@ -72,40 +33,6 @@
   }
   to {
     transform: translateX(230%);
-  }
-}
-
-// Apparition en fondu + montée (menu mobile, listes…)
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-// Entrée des liens du menu mobile, en cascade
-@keyframes menu-item-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-// Le loader s'écarte en rideau plutôt que de disparaître
-@keyframes curtain-out {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-101%);
   }
 }
 
@@ -130,13 +57,24 @@
   }
 }
 
-// Rotation douce du halo (fond du hero)
-@keyframes halo-drift {
+// Dérive lente des halos colorés du hero
+@keyframes orb-drift {
   0%,
   100% {
     transform: translate3d(0, 0, 0) scale(1);
   }
   50% {
-    transform: translate3d(-3%, -4%, 0) scale(1.08);
+    transform: translate3d(-6%, 8%, 0) scale(1.12);
+  }
+}
+
+// Trait de l'indicateur de scroll, qui tombe en boucle
+@keyframes scroll-hint {
+  0% {
+    transform: translateY(-100%);
+  }
+  60%,
+  100% {
+    transform: translateY(100%);
   }
 }

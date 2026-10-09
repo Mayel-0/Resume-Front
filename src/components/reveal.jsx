@@ -1,9 +1,6 @@
-import { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
-
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+import { Children, useRef } from "react";
+import { gsap, useGSAP, prefersReducedMotion } from "../lib/gsap";
+import { useTransition } from "../context/transitionContext";
 
 /**
  * Reveal — révélation au scroll, réutilisable partout.
@@ -12,6 +9,10 @@ gsap.registerPlugin(useGSAP, ScrollTrigger);
  * conteneur entre dans le viewport. Fallback : si GSAP n'est
  * pas disponible, le contenu reste visible (pas de opacity:0
  * en dur dans le CSS).
+ *
+ * L'animation est recréée quand le nombre d'enfants change
+ * (listes chargées depuis l'API) et attend que le rideau de
+ * transition soit levé.
  *
  * @param {string}  as        — balise JSX du conteneur (div, section, ul…)
  * @param {string}  className — classes appliquées au conteneur
@@ -33,19 +34,28 @@ function Reveal({
   start = "top 82%",
   once = true,
   children,
+  ...rest
 }) {
   const containerRef = useRef(null);
+  const { revealed } = useTransition();
+  const count = Children.count(children);
 
   useGSAP(
     () => {
       const root = containerRef.current;
-      if (!root) return;
+      if (!root || prefersReducedMotion()) return;
 
       const els = target
         ? gsap.utils.toArray(target, root)
         : Array.from(root.children);
 
       if (!els.length) return;
+
+      // Rideau encore baissé : on masque, l'animation partira ensuite
+      if (!revealed) {
+        gsap.set(els, { opacity: 0 });
+        return;
+      }
 
       gsap.fromTo(
         els,
@@ -68,11 +78,11 @@ function Reveal({
         }
       );
     },
-    { scope: containerRef }
+    { scope: containerRef, dependencies: [revealed, count], revertOnUpdate: true }
   );
 
   return (
-    <Tag ref={containerRef} className={className}>
+    <Tag ref={containerRef} className={className} {...rest}>
       {children}
     </Tag>
   );

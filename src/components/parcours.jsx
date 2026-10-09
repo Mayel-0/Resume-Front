@@ -1,11 +1,7 @@
 import { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
+import { gsap, useGSAP, prefersReducedMotion } from "../lib/gsap";
 import Reveal from "./reveal";
 import SplitHeading from "./splitHeading";
-
-gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 function Parcours({timeline = [], sections = []}) {
   const containerRef = useRef();
@@ -14,7 +10,7 @@ function Parcours({timeline = [], sections = []}) {
     () => {
       if (!timeline.length) return;
 
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (prefersReducedMotion()) return;
 
       // 1. La ligne de la timeline se DÉSSINE au fil du scroll (scrub)
       const line = containerRef.current?.querySelector(".timeline__line");
@@ -76,7 +72,7 @@ function Parcours({timeline = [], sections = []}) {
         }
       });
     },
-    { scope: containerRef, dependencies: [timeline] }
+    { scope: containerRef, dependencies: [timeline], revertOnUpdate: true }
   );
 
   return (
@@ -90,7 +86,7 @@ function Parcours({timeline = [], sections = []}) {
         {/* Ligne continue animée en scrub (remplace ::before statique) */}
         <span className="timeline__line" aria-hidden="true" />
         {timeline.map((item) => (
-          <li className="timeline__item" key={item.order}>
+          <li className="timeline__item" key={item.id}>
             <span className="timeline__dot" aria-hidden="true" />
             <span className="timeline__period">{item.period}</span>
             <div className="timeline__body">
@@ -107,11 +103,12 @@ function Parcours({timeline = [], sections = []}) {
           <article
             id={section.sectionId}
             className="card narrative__card"
-            key={section.order}
+            key={section.id}
+            data-tilt
           >
             <span className="section__index">{section.index}</span>
             <h3>{section.title}</h3>
-            <p dangerouslySetInnerHTML={{ __html: section.html }} />
+            <div className="narrative__text" dangerouslySetInnerHTML={{ __html: section.html }} />
           </article>
         ))}
       </Reveal>

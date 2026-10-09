@@ -128,25 +128,41 @@
   border-radius: var(--radius-lg);
   padding: clamp(1.5rem, 3vw, 2.25rem);
   backdrop-filter: blur(14px);
+  // Pas de transition sur transform : l'inclinaison 3D est pilotée
+  // image par image par GSAP (useTilt).
   transition:
     border-color 0.35s var(--ease),
-    transform 0.35s var(--ease),
-    background 0.35s var(--ease);
+    background 0.35s var(--ease),
+    box-shadow 0.35s var(--ease);
+
+  // Halo qui suit le curseur (--mx / --my posés par useTilt)
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+      420px circle at var(--mx, 50%) var(--my, 50%),
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 62%
+    );
+    opacity: 0;
+    transition: opacity 0.45s var(--ease);
+  }
 
   &:hover {
     border-color: var(--accent-line);
     background: var(--surface-strong);
+
+    &::before {
+      opacity: 1;
+    }
   }
 }
-.reveal {
-  opacity: 0;
-  transform: translateY(22px);
-}
 
-.reveal.is-visible {
-  opacity: 1;
-  transform: none;
-  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+[data-tilt] {
+  transform-style: preserve-3d;
 }
 
 .tag {
@@ -197,15 +213,14 @@
   background: var(--accent);
 }
 
-.typewriter {
-  border-right: 2px solid #fff;
-  white-space: nowrap;
-  animation: blink 0.75s step-end infinite;
-}
+// Mots découpés par SplitHeading : la rotation 3D a besoin de perspective
+.split-heading {
+  perspective: 800px;
 
-@keyframes blink {
-  from, to { border-color: transparent; }
-  50% { border-color: #000; }
+  .word {
+    transform-origin: 50% 100%;
+    will-change: transform;
+  }
 }
 
 

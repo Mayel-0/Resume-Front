@@ -16,6 +16,24 @@
     border-color 0.3s var(--ease),
     background 0.3s var(--ease);
 
+  // Barre de progression de lecture, sous le header
+  &__progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    pointer-events: none;
+
+    span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #7c5cff));
+      transform: scaleX(0);
+      transform-origin: left;
+    }
+  }
+
   &__inner {
     width: var(--shell);
     margin-inline: auto;

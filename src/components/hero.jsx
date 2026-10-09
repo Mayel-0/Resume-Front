@@ -1,30 +1,28 @@
 import { MoveRight } from "lucide-react";
-import gsap from "gsap";
-import { ScrambleTextPlugin } from "gsap/ScrambleTextPlugin";
-import { TextPlugin } from "gsap/TextPlugin";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 import SplitType from "split-type";
 import { useRef } from "react";
+import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion, canHover } from "../lib/gsap";
+import { useTransition } from "../context/transitionContext";
+import { assetUrl, CV_URL, CV_FILENAME } from "../lib/api";
+import TransitionLink from "./transitionLink";
 
-// Enregistrer UNIQUEMENT les plugins officiels GSAP
-gsap.registerPlugin(ScrambleTextPlugin, TextPlugin, ScrollTrigger, useGSAP);
-
-function Hero({ profil = {}, socials = [] , isReady = false}) {
+function Hero({ profil = {}, socials = [] }) {
   const containerHero = useRef();
   const firstNameHero = useRef();
   const HeroPortrait = useRef();
   const lastNameHero = useRef();
   const locationRef = useRef();
+  const { revealed } = useTransition();
 
   useGSAP(
     () => {
       const root = containerHero.current;
-      if (!root || !isReady || !profil?.firstName || !profil?.lastName) return;
+      // On attend les données ET la levée du rideau
+      if (!root || !revealed || !profil?.firstName || !profil?.lastName) return;
 
       // Accessibilité : si l'utilisateur préfère moins de mouvement,
       // on n'applique aucun état "from" → le contenu reste visible tel quel.
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (prefersReducedMotion()) return;
 
       // --- Découpe du texte -----------------------------------
       const lastSplit = new SplitType(lastNameHero.current, { types: "chars" });
@@ -35,12 +33,24 @@ function Hero({ profil = {}, socials = [] , isReady = false}) {
       const actionBtns = root.querySelectorAll(".hero__actions .btn");
       const role = root.querySelector(".hero__role");
       const tagline = root.querySelector(".hero__tagline");
+      // La valeur cible est mémorisée : le texte passe à 0 pendant l'animation
       const counters = Array.from(
         root.querySelectorAll(".hero__highlights strong")
-      ).filter((el) => /^\d+$/.test(el.textContent.trim()));
+      ).filter((el) => {
+        el.dataset.count ??= el.textContent.trim();
+        return /^\d+$/.test(el.dataset.count);
+      });
 
       // --- Timeline d'ouverture cinématique -------------------
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      // 0. Décor : la grille et les halos s'installent
+      tl.fromTo(
+        ".hero__bg",
+        { opacity: 0, scale: 1.12 },
+        { opacity: 1, scale: 1, duration: 2.2, ease: "power2.out" },
+        0
+      );
 
       // 1. Localisation — les mots entrent en cascade
       tl.fromTo(
@@ -143,7 +153,7 @@ function Hero({ profil = {}, socials = [] , isReady = false}) {
 
       // 9. Compteurs numériques (11 projets, 8 langages…)
       counters.forEach((el) => {
-        const target = parseInt(el.textContent.trim(), 10);
+        const target = parseInt(el.dataset.count, 10);
         const state = { value: 0 };
         el.textContent = "0";
         tl.to(
@@ -160,40 +170,64 @@ function Hero({ profil = {}, socials = [] , isReady = false}) {
         );
       });
 
+      // 10. Invitation à scroller
+      tl.fromTo(".hero__scroll", { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.6 }, 2.6);
+
       // --- Flottement continu du portrait + halo ----------------
+      const float = gsap.to(HeroPortrait.current, {
+        y: -14,
+        duration: 2.8,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut",
+        paused: true,
+      });
+      const breathe = gsap.to(".hero__glow", {
+        scale: 1.07,
+        opacity: 0.9,
+        duration: 3.2,
+        yoyo: true,
+        repeat: -1,
+        ease: "sine.inOut",
+        paused: true,
+      });
       tl.add(() => {
-        gsap.to(HeroPortrait.current, {
-          y: -14,
-          duration: 2.8,
-          yoyo: true,
-          repeat: -1,
-          ease: "sine.inOut",
-        });
-        const glowEl = root.querySelector(".hero__glow");
-        if (glowEl) {
-          gsap.to(glowEl, {
-            scale: 1.07,
-            opacity: 0.9,
-            duration: 3.2,
-            yoyo: true,
-            repeat: -1,
-            ease: "sine.inOut",
-          });
-        }
+        float.play();
+        breathe.play();
+      });
+
+      // --- Sortie au scroll : le texte s'efface, le portrait
+      // descend moins vite que la page (profondeur) --------------
+      gsap.to(".hero__text", {
+        yPercent: -16,
+        opacity: 0.1,
+        ease: "none",
+        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
+      });
+      gsap.to(".hero__portrait-wrap", {
+        yPercent: 12,
+        ease: "none",
+        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
+      });
+      gsap.to(".hero__bg", {
+        yPercent: 22,
+        ease: "none",
+        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
       });
 
       // --- Parallaxe à la souris (portrait + halo) -------------
       const portraitImg = root.querySelector(".hero__portrait img");
       const glow = root.querySelector(".hero__glow");
-      const canHover = window.matchMedia("(hover: hover)").matches;
 
       let onPointerMove;
-      if (canHover && portraitImg) {
+      if (canHover() && portraitImg) {
         const toImgX = gsap.quickTo(portraitImg, "x", { duration: 0.8, ease: "power3.out" });
         const toImgY = gsap.quickTo(portraitImg, "y", { duration: 0.8, ease: "power3.out" });
         const toGlowX = glow
           ? gsap.quickTo(glow, "xPercent", { duration: 1.2, ease: "power3.out" })
           : null;
+        const toOrbsX = gsap.quickTo(".hero__orbs", "x", { duration: 1.6, ease: "power3.out" });
+        const toOrbsY = gsap.quickTo(".hero__orbs", "y", { duration: 1.6, ease: "power3.out" });
 
         onPointerMove = (e) => {
           const rect = root.getBoundingClientRect();
@@ -202,6 +236,8 @@ function Hero({ profil = {}, socials = [] , isReady = false}) {
           toImgX(nx * 26);
           toImgY(ny * 18);
           toGlowX?.(nx * 6);
+          toOrbsX(nx * -60);
+          toOrbsY(ny * -40);
         };
         root.addEventListener("pointermove", onPointerMove);
       }
@@ -212,48 +248,46 @@ function Hero({ profil = {}, socials = [] , isReady = false}) {
         locationSplit.revert();
       };
     },
-    { scope: containerHero, dependencies: [isReady, profil?.firstName, profil?.lastName] }
+    {
+      scope: containerHero,
+      dependencies: [revealed, profil?.firstName, profil?.lastName],
+      revertOnUpdate: true,
+    }
   );
-
-  const handleDownload = async () => {
-    const url = `${import.meta.env.VITE_API_URL}/documents/Cv_Mael_llado.pdf`;
-    const response = await fetch(url);
-    const blob = await response.blob();
-    const blobUrl = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = "CV_Mael_Llado.pdf";
-    a.click();
-
-    URL.revokeObjectURL(blobUrl);
-  };
 
   return (
     <section className="hero" id="hero" ref={containerHero}>
+      <div className="hero__bg" aria-hidden="true">
+        <div className="hero__grid" />
+        <div className="hero__orbs">
+          <span className="hero__orb hero__orb--a" />
+          <span className="hero__orb hero__orb--b" />
+        </div>
+      </div>
+
       <div className="shell hero__inner">
         <div className="hero__text">
           <span ref={locationRef} className="hero__location">{profil.location}</span>
           <h1>
-            <label ref={firstNameHero}>{profil.firstName}</label><br />
-            <span ref={lastNameHero}>{profil.lastName}</span>
+            <span ref={firstNameHero} className="hero__first">{profil.firstName}</span><br />
+            <span ref={lastNameHero} className="hero__last">{profil.lastName}</span>
           </h1>
           <p className="hero__role">{profil.role}</p>
           <p className="hero__tagline">{profil.tagline}</p>
 
           <div className="hero__actions">
-            <a className="btn btn--accent" href="#projets" data-magnetic="0.3">
+            <TransitionLink className="btn btn--accent" to="/#projets" data-magnetic="0.3">
               Voir mes projets
               <MoveRight size={24} aria-hidden="true" />
-            </a>
-            <a className="btn" onClick={handleDownload} aria-label="Télécharger le CV" data-magnetic="0.3">
+            </TransitionLink>
+            <a className="btn" href={CV_URL} download={CV_FILENAME} data-magnetic="0.3">
               Télécharger le CV
             </a>
           </div>
 
           <ul className="hero__socials">
             {socials.map((social) => (
-              <li key={social.order}>
+              <li key={social.id}>
                 <a href={social.href} target="_blank" rel="noopener noreferrer" aria-label={social.label} data-magnetic="0.4">
                   <svg
                     viewBox={social.viewBox || social.viewbox}
@@ -269,9 +303,18 @@ function Hero({ profil = {}, socials = [] , isReady = false}) {
           </ul>
         </div>
 
-        <div ref={HeroPortrait} className="hero__portrait">
-          <div className="hero__glow" aria-hidden="true"></div>
-          <img src={`${import.meta.env.VITE_API_URL}${profil.portraitUrl}`} alt={`Portrait de ${profil.firstName} ${profil.lastName}`} />
+        {/* Deux niveaux : le wrap suit le scroll, le portrait flotte */}
+        <div className="hero__portrait-wrap">
+          <div ref={HeroPortrait} className="hero__portrait">
+            <div className="hero__glow" aria-hidden="true"></div>
+            {profil.portraitUrl && (
+              <img
+                src={assetUrl(profil.portraitUrl)}
+                alt={`Portrait de ${profil.firstName} ${profil.lastName}`}
+                onLoad={() => ScrollTrigger.refresh()}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -294,6 +337,11 @@ function Hero({ profil = {}, socials = [] , isReady = false}) {
             <span>langages utilisés</span>
           </li>
         </ul>
+
+        <div className="hero__scroll" aria-hidden="true">
+          <span />
+          Scroll
+        </div>
       </div>
     </section>
   );

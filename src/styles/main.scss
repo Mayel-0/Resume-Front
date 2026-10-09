@@ -11,7 +11,9 @@
 @use './components/contacts';
 @use './components/footer';
 
-@use './components/pageLoader';
+@use './components/curtain';
+@use './components/cursor';
+@use './components/marquee';
 
 @use './components/projects';
 @use './components/projectCard';

@@ -89,3 +89,12 @@
     }
   }
 }
+
+// La section porte le bandeau incliné au-dessus de la carte
+.contact-section {
+  padding-top: clamp(2rem, 5vw, 4rem);
+
+  .marquee {
+    margin-bottom: clamp(3.5rem, 8vw, 6.5rem);
+  }
+}

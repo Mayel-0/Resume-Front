@@ -1,0 +1,59 @@
+@use '../abstracts/variables' as *;
+
+// Bandeau de texte en défilement infini (marquee.jsx)
+.marquee {
+  overflow: hidden;
+  padding-block: clamp(1.1rem, 2.6vw, 2rem);
+  border-block: 1px solid var(--border);
+  user-select: none;
+  // Fond uni : il sert aussi de couleur de remplissage aux lettres en contour
+  --marquee-bg: var(--bg);
+  background: var(--marquee-bg);
+
+  &__inner {
+    display: flex;
+    width: max-content;
+  }
+
+  &__track {
+    flex: none;
+    display: flex;
+    align-items: center;
+    will-change: transform;
+  }
+
+  &__item {
+    display: inline-flex;
+    align-items: center;
+    font-family: "Titre", sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.9rem, 5.4vw, 4.2rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--text);
+
+    // Un libellé sur deux en contour seul. Les polices variables ont des
+    // tracés qui se chevauchent : un contour "transparent" les laisserait
+    // voir. On peint donc le contour puis un remplissage couleur de fond.
+    &:nth-child(even) {
+      color: var(--marquee-bg);
+      -webkit-text-stroke: 2px var(--text-3);
+      paint-order: stroke fill;
+    }
+  }
+
+  &__sep {
+    margin-inline: clamp(1.1rem, 2.6vw, 2.4rem);
+    font-size: 0.4em;
+    color: var(--accent);
+    -webkit-text-stroke: 0;
+  }
+
+  // Variante inclinée (section contact)
+  &--tilt {
+    transform: rotate(-2deg) scale(1.04);
+    --marquee-bg: var(--bg-2);
+  }
+}

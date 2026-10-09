@@ -1,10 +1,7 @@
 import { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 import SplitType from "split-type";
-
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+import { gsap, useGSAP, prefersReducedMotion } from "../lib/gsap";
+import { useTransition } from "../context/transitionContext";
 
 /**
  * SplitHeading — titre révélé mot par mot au scroll.
@@ -29,11 +26,18 @@ function SplitHeading({
   children,
 }) {
   const headingRef = useRef(null);
+  const { revealed } = useTransition();
 
   useGSAP(
     () => {
       const el = headingRef.current;
-      if (!el || !el.textContent?.trim()) return;
+      if (!el || !el.textContent?.trim() || prefersReducedMotion()) return;
+
+      // Rideau encore baissé : on masque, l'animation partira ensuite
+      if (!revealed) {
+        gsap.set(el, { opacity: 0 });
+        return;
+      }
 
       const split = new SplitType(el, { types: "words" });
       const words = split.words;
@@ -64,11 +68,11 @@ function SplitHeading({
 
       return () => split.revert();
     },
-    { scope: headingRef }
+    { scope: headingRef, dependencies: [revealed], revertOnUpdate: true }
   );
 
   return (
-    <Tag ref={headingRef} className={className}>
+    <Tag ref={headingRef} className={`split-heading ${className}`}>
       {children}
     </Tag>
   );

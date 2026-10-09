@@ -1,0 +1,84 @@
+// Curseur personnalisé (cursor.jsx) : la position est pilotée par
+// GSAP (transform), la taille par des transitions CSS.
+.cursor {
+  transition: opacity 0.3s var(--ease);
+
+  &.is-hidden {
+    opacity: 0;
+  }
+
+  &__dot,
+  &__ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9998;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  &__dot {
+    width: 8px;
+    height: 8px;
+    margin: -4px 0 0 -4px;
+    background: var(--accent);
+    transition: opacity 0.25s var(--ease);
+  }
+
+  &__ring {
+    width: 44px;
+    height: 44px;
+    margin: -22px 0 0 -22px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--accent-line);
+    transition:
+      width 0.4s var(--ease),
+      height 0.4s var(--ease),
+      margin 0.4s var(--ease),
+      background 0.4s var(--ease),
+      border-color 0.4s var(--ease);
+  }
+
+  &__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #06070a;
+    opacity: 0;
+    transition: opacity 0.25s var(--ease);
+  }
+
+  // Sur un lien ou un bouton
+  &.is-hover &__ring {
+    width: 68px;
+    height: 68px;
+    margin: -34px 0 0 -34px;
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+
+  // Sur un élément data-cursor : pastille pleine avec libellé
+  &.has-label &__ring {
+    width: 96px;
+    height: 96px;
+    margin: -48px 0 0 -48px;
+    background: var(--accent);
+    border-color: transparent;
+  }
+
+  &.has-label &__label {
+    opacity: 1;
+  }
+
+  &.has-label &__dot {
+    opacity: 0;
+  }
+
+  &.is-down &__ring {
+    width: 34px;
+    height: 34px;
+    margin: -17px 0 0 -17px;
+  }
+}

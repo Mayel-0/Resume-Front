@@ -4,47 +4,43 @@ import Parcours from '../components/parcours'
 import Skills from '../components/skills'
 import Projects from '../components/projects'
 import Contacts from '../components/contacts'
+import Marquee from '../components/marquee'
+import ApiError from '../components/apiError'
 
-import PageLoader from '../components/pagesLoader'
-
-import useProfile from "../hooks/useHero.js";
-import useSocials from "../hooks/useSocials.js";
-import useTimeline from "../hooks/useTimeline";
-import useSections from "../hooks/useSections";
-import useProjects from "../hooks/useProject.js";
-import useProjectsTags from "../hooks/useProjectsTags.js";
-import useSkillsItems from "../hooks/useSkillsItems.js";
-import useSkillCategories from "../hooks/useSkillCategories.js";
-import useBriefs from '../hooks/usebriefs.js';
+import useApi from '../hooks/useApi'
+import { usePageReady } from '../context/transitionContext'
 
 function HomePage() {
 
-  const { profil, loading: loadingProfil } = useProfile();
-  const { socials, loading: loadingSocials } = useSocials();
-  const { timeline, loading: loadingTimeline } = useTimeline();
-  const { sections, loading: loadingSections } = useSections();
-  const { projects, loading: loadingProjects } = useProjects();
-  const { projectsTags, loading: loadingProjectsTags } = useProjectsTags();
-  const {briefs, loading: loadingBriefs} = useBriefs();
-  const {skillCategories, loading: loadingskillCategories} = useSkillCategories();
-  const {skillsItems, loading: loadingskillsitems} = useSkillsItems();
+  const profil = useApi("/api/profil");
+  const socials = useApi("/api/socials");
+  const timeline = useApi("/api/timeline");
+  const sections = useApi("/api/sections");
+  const projects = useApi("/api/projects");
+  const projectsTags = useApi("/api/project-tags");
+  const briefs = useApi("/api/briefs");
+  const skillCategories = useApi("/api/skill-categories");
+  const skillsItems = useApi("/api/skill-items");
 
+  const requests = [profil, socials, timeline, sections, projects, projectsTags, briefs, skillCategories, skillsItems];
+  const isLoading = requests.some((request) => request.loading);
+  const hasError = requests.some((request) => request.error);
 
-  const isLoading = [loadingProfil,loadingSocials,loadingTimeline,loadingSections,loadingProjects,loadingProjectsTags,loadingskillCategories,loadingskillsitems,loadingBriefs].some(Boolean);
+  // Le rideau (preloader / transition) se lève quand tout est chargé
+  usePageReady(!isLoading);
+
+  if (hasError) return <ApiError />;
 
   return (
-    <div>
-      <PageLoader loading={isLoading}>
-        <main>
-          <Hero profil={profil} socials={socials} isReady={!isLoading}/>
-          <About briefs={briefs} />
-          <Parcours timeline={timeline} sections={sections}/>
-          <Skills skillCategories={skillCategories} skillsItems={skillsItems} />
-          <Projects projects={projects} projectsTags={projectsTags}/>
-          <Contacts socials={socials} />
-        </main>
-      </PageLoader>
-    </div>
+    <main>
+      <Hero profil={profil.data[0]} socials={socials.data} />
+      <Marquee items={skillsItems.data.map((item) => item.label)} duration={60} />
+      <About briefs={briefs.data} />
+      <Parcours timeline={timeline.data} sections={sections.data}/>
+      <Skills skillCategories={skillCategories.data} skillsItems={skillsItems.data} />
+      <Projects projects={projects.data} projectsTags={projectsTags.data}/>
+      <Contacts socials={socials.data} />
+    </main>
   )
 }
 

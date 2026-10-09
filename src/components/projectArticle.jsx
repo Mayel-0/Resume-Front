@@ -1,9 +1,13 @@
-function ProjectArticle({projects = [], projectsTags = [], projectsStack = []}) {
+import { assetUrl } from "../lib/api";
+
+function ProjectArticle({projects = {}, projectsTags = [], projectsStack = []}) {
+  const stack = projectsStack.filter((item) => item.projectId === projects.id);
+
   return (
     <article id={projects.slug} className="card projectD-article">
       <div className="projectD-article__grid">
         <div className="projectD-article__media">
-          <img src={`${import.meta.env.VITE_API_URL}${projects.imageUrl}`} alt={`${projects.title}`} />
+          <img src={assetUrl(projects.imageUrl)} alt={`${projects.title}`} loading="lazy" />
         </div>
         <div className="projectD-article__intro">
           <div className="projectD-article__top">
@@ -13,7 +17,7 @@ function ProjectArticle({projects = [], projectsTags = [], projectsStack = []}) 
           <div className="tag-list projectD-article__tags">
             <span className="projectD-article__tag">{projects.year}</span>
             {projectsTags.filter((item) => item.projectId === projects.id).map((item) => (
-              <span className="projectD-article__tag">{item.tag}</span>
+              <span className="projectD-article__tag" key={item.id}>{item.tag}</span>
             ))}
           </div>
           <p>{projects.intro}</p>
@@ -31,22 +35,22 @@ function ProjectArticle({projects = [], projectsTags = [], projectsStack = []}) 
         <div>
           <h3>Langage</h3>
           <div className="projectD-article__tag-list">
-            {projectsStack.filter((item) => item.projectId === projects.id && item.type === "language").map((item) => (
-              <span className="projectD-article__tag">{item.label}</span>
+            {stack.filter((item) => item.type === "language").map((item) => (
+              <span className="projectD-article__tag" key={item.id}>{item.label}</span>
             ))}
           </div>
         </div>
         <div>
           <h3>Frameworks & bibliothèques</h3>
           <div className="projectD-article__tag-list">
-            {projectsStack.filter((item) => item.projectId === projects.id && item.type === "framework").map((item) => (
-              <span className="projectD-article__tag">{item.label}</span>
+            {stack.filter((item) => item.type === "framework").map((item) => (
+              <span className="projectD-article__tag" key={item.id}>{item.label}</span>
             ))}
           </div>
         </div>
       </div>
-      {projects.githubUrl && <a href={projects.githubUrl} className="btn btn--accent projectD-article__link">{projects.linkLabel}</a>}
-      {projects.liveUrl && <a href={projects.liveUrl} className="btn btn--accent projectD-article__link">{projects.linkLabel}</a>}
+      {projects.githubUrl && <a href={projects.githubUrl} className="btn btn--accent projectD-article__link" target="_blank" rel="noopener noreferrer" data-magnetic="0.2">{projects.linkLabel}</a>}
+      {projects.liveUrl && <a href={projects.liveUrl} className="btn btn--accent projectD-article__link" target="_blank" rel="noopener noreferrer" data-magnetic="0.2">{projects.linkLabel}</a>}
     </article>
   );
 }

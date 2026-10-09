@@ -85,6 +85,15 @@
       margin: 0.6rem 0 0.8rem;
     }
   }
+
+  // HTML saisi dans le backoffice
+  &__text {
+    color: var(--text-2);
+
+    p {
+      margin: 0 0 0.6rem;
+    }
+  }
 }
 
 @include respond-to(tablet) {

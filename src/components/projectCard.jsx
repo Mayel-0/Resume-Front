@@ -1,19 +1,22 @@
 import { MoveRight } from "lucide-react";
+import { assetUrl } from "../lib/api";
+import TransitionLink from "./transitionLink";
 
-function ProjectCard({ project = [], projectsTags = [] }) {
+function ProjectCard({ project = {}, projectsTags = [] }) {
   return (
-    <article className="project-card card">
-      <a
+    <article className="project-card card" data-tilt>
+      <TransitionLink
         className="project-card__media"
-        href={`/ProjectsD#${project.slug}`}
+        to={`/ProjectsD#${project.slug}`}
         aria-label={`Voir le détail du projet ${project.title}`}
+        data-cursor="Voir"
       >
         <img
-          src={`${import.meta.env.VITE_API_URL}${project.imageUrl}`}
+          src={assetUrl(project.imageUrl)}
           alt={`Aperçu du projet ${project.title}`}
           loading="lazy"
         />
-      </a>
+      </TransitionLink>
 
       <div className="project-card__body">
         <div className="project-card__top">
@@ -36,10 +39,10 @@ function ProjectCard({ project = [], projectsTags = [] }) {
         </div>
 
         <div className="project-card__actions">
-          <a className="btn btn--sm" href={`/ProjectsD#${project.slug}`}>
+          <TransitionLink className="btn btn--sm" to={`/ProjectsD#${project.slug}`}>
             Détails
             <MoveRight size={16} aria-hidden="true" />
-          </a>
+          </TransitionLink>
           {project.githubUrl && (
             <a
               href={project.githubUrl}
