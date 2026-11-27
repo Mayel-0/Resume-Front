@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="fr" class="no-js" data-fond="ardoise">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prototype motion v3 · « Le tracé » · mael-llado.com</title>
+<!--
+  Prototype Léa, MAEL-211 v3. Statique, hors du vrai site, jamais copié tel quel.
+  Depuis Resume-Front : python3 -m http.server 8765, puis http://localhost:8765/design/accueil-motion.html
+  ?fond=clair pour le fond clair · ?reduced=1 pour simuler prefers-reduced-motion.
+  GSAP + ScrollTrigger + Lenis via jsDelivr (connexion requise).
+-->
+<script>
+  document.documentElement.classList.replace("no-js", "js");
+  history.scrollRestoration = "manual";
+  // Thème : suit le réglage clair/sombre de l'ordinateur ; ?fond=clair ou ?fond=ardoise le force
+  const fond = new URLSearchParams(location.search).get("fond");
+  if (fond === "clair" || (!fond && matchMedia("(prefers-color-scheme: light)").matches)) document.documentElement.dataset.fond = "clair";
+</script>
+<style>
+@font-face { font-family: "Clash Display"; src: url("../src/assets/fonts/ClashDisplay-Variable.woff2") format("woff2"); font-weight: 200 700; font-display: swap; }
+@font-face { font-family: "Supreme"; src: url("../src/assets/fonts/Supreme-Variable.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+/* ---------------------------------------------------------------------
+   Palette (rôle de chaque couleur dans accueil-motion.md)
+   Fond neutre « ardoise » par défaut, variante « clair » en option.
+   Quatre couleurs de tracé, une par chapitre du site.
+   --------------------------------------------------------------------- */
+:root {
+  --bg: #1c1e22;        /* ardoise : gris neutre, ni noir ni bleuté */
+  --card: #25282d;      /* surfaces posées sur le fond */
+  --ink: #edebe7;       /* texte principal */
+  --ink-2: #b3b6bc;     /* texte secondaire (AA sur --bg et --card) */
+  --hair: rgba(255,255,255,.09);
+  --lagon: #33c4f2;     /* accueil, à propos, liens */
+  --menthe: #44d6a0;    /* parcours */
+  --mandarine: #ff8b42; /* projets */
+  --soleil: #ffd04d;    /* contact */
+  --shadow-a: .85; --shadow-b: .50;
+}
+[data-fond="clair"] {
+  --bg: #e7e6e2; --card: #f7f6f3; --ink: #17191c; --ink-2: #4b5058; --hair: rgba(0,0,0,.09);
+  --lagon: #0b93c6; --menthe: #0e9a6c; --mandarine: #e2621a; --soleil: #d39e00;
+  --shadow-a: .70; --shadow-b: .42;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); color: var(--ink); font: 400 1.0625rem/1.55 "Supreme", system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; transition: background .4s; }
+h1, h2, h3 { font-family: "Clash Display", sans-serif; font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+a:focus-visible { outline: 2px solid var(--lagon); outline-offset: 3px; }
+
+/* Ombres colorées : chaque surface prend la teinte de son chapitre */
+.tone-lagon { --tone: var(--lagon); }
+.tone-menthe { --tone: var(--menthe); }
+.tone-mandarine { --tone: var(--mandarine); }
+.tone-soleil { --tone: var(--soleil); }
+.lift { background: var(--card);
+  box-shadow: 0 46px 90px -34px color-mix(in srgb, var(--tone) calc(var(--shadow-a) * 100%), transparent),
+              0 14px 30px -12px color-mix(in srgb, var(--tone) calc(var(--shadow-b) * 100%), transparent),
+              0 0 0 1px color-mix(in srgb, var(--tone) 18%, transparent); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 1.4rem; border-radius: 999px; font-weight: 600; white-space: nowrap;
+  border: 1.5px solid var(--ink); transition: background .25s, color .25s; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+.btn--full { background: var(--ink); color: var(--bg); }
+.btn--full:hover { background: transparent; color: var(--ink); }
+
+/* ---------------------------------------------------------------------
+   Contenu (mode page classique : sans JS ou mouvement réduit)
+   --------------------------------------------------------------------- */
+.header { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1rem clamp(1.25rem, 5vw, 4rem); background: var(--bg); }
+.header__logo { font: 600 1.05rem "Clash Display"; }
+.header__nav { display: flex; gap: 1.6rem; font-size: .95rem; color: var(--ink-2); }
+.header__nav a:hover { color: var(--ink); }
+.header__cta { display: none; min-height: 40px; padding: 0 1.1rem; font-size: .92rem; }
+
+.trace, .hud { display: none; }
+.world { display: grid; gap: clamp(4rem, 10vh, 7rem); width: min(1180px, 100% - 2.5rem); margin: 2rem auto 6rem; }
+.panel__in { position: relative; }
+
+.hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: 3rem; align-items: center; }
+.hero__where { color: var(--ink-2); margin-bottom: 1.4rem; }
+.hero__name { font-size: clamp(3.4rem, min(11vw, 14vh), 9.5rem); line-height: .9; }
+.hero__first { display: block; font-weight: 400; color: var(--ink-2); }
+.hero__last { display: inline-block; }
+.char { display: inline-block; }
+.hero__role { margin-top: 1.6rem; font-weight: 600; font-size: 1.15rem; }
+.hero__pitch { margin-top: .6rem; max-width: 46ch; color: var(--ink-2); }
+.hero__actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.8rem; }
+.hero__portrait { border-radius: 4px 140px 4px 4px; overflow: hidden; aspect-ratio: 4/5; max-height: 70vh; }
+.hero__portrait img { width: 100%; height: 100%; object-fit: cover; }
+
+.about { padding: clamp(1.6rem, 4vw, 3.2rem); border-radius: 28px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 2.5rem; }
+.about h2 { grid-column: 1 / -1; font-size: clamp(2.2rem, 5vw, 4rem); }
+.about__text { font: 500 clamp(1.1rem, 1.9vw, 1.55rem)/1.45 "Clash Display"; }
+.facts { display: grid; gap: 1.1rem; align-content: start; }
+.facts dt { font-size: .88rem; color: var(--ink-2); }
+.facts dd { font-weight: 600; }
+
+.chapter { font-size: clamp(2.2rem, 5.5vw, 4.4rem); }
+.steps { list-style: none; display: grid; gap: 1rem; }
+.step { position: relative; padding: 1.2rem 1.3rem 1.1rem; border-radius: 14px; }
+.step__dot { position: absolute; top: -7px; left: 1.3rem; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); border: 3px solid var(--menthe); }
+.step__when { color: var(--ink-2); font-size: .9rem; }
+.step h3 { font-size: 1.3rem; font-weight: 500; margin-top: .25rem; }
+.step p { color: var(--ink-2); font-size: .95rem; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
+.card { display: block; border-radius: 6px; overflow: hidden; }
+.card__media { aspect-ratio: 16/10; overflow: hidden; }
+.card__media img { width: 100%; height: 100%; object-fit: cover; }
+.card__body { padding: .9rem 1rem 1.1rem; }
+.card__meta { color: var(--ink-2); font-size: .88rem; }
+.card h3 { font-size: 1.3rem; font-weight: 500; margin-top: .2rem; }
+
+.contact { text-align: center; padding: 2rem 0; }
+.contact h2 { font-size: clamp(2.2rem, 5.5vw, 4.4rem); max-width: 15ch; margin-inline: auto; }
+.contact p { color: var(--ink-2); max-width: 40ch; margin: 1.2rem auto 2rem; }
+.contact__cta { min-height: 58px; padding: 0 2.2rem; font-size: 1.1rem; }
+.contact__links { display: flex; justify-content: center; gap: 1.6rem; margin-top: 1.5rem; color: var(--ink-2); }
+.contact__links a { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--hair); }
+.contact__links a:hover { color: var(--ink); text-decoration-color: currentColor; }
+
+.mk { position: fixed; right: 12px; bottom: 12px; z-index: 60; display: flex; gap: .35rem; align-items: center; padding: .3rem;
+  border-radius: 999px; background: var(--card); border: 1px solid var(--hair); font-size: .75rem; }
+.mk a { padding: .3rem .7rem; border-radius: 999px; border: 1px solid var(--hair); }
+
+@media (max-width: 899px) {
+  .header__nav { display: none; }
+  .header__cta { display: inline-flex; }
+  .hero, .about { grid-template-columns: 1fr; }
+  .hero__portrait { width: 46vw; max-width: 240px; }
+  .mk { bottom: .7rem; right: .7rem; } .mk a { padding: .25rem .55rem; }
+}
+
+/* ---------------------------------------------------------------------
+   Mode « tracé » : la page devient une carte, le scroll déplace la caméra
+   le long d'une ligne en quatre couleurs.
+   --------------------------------------------------------------------- */
+.is-world body { min-height: 100%; }
+.is-world .header { position: fixed; inset: 0 0 auto; background: linear-gradient(var(--bg) 55%, transparent); }
+.is-world .stage { position: fixed; inset: 0; overflow: hidden; height: 100lvh; z-index: 0; }
+.is-world .trace { display: block; position: absolute; inset: 0; width: 100%; height: 100%; }
+.trace path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.is-world .world { display: block; width: auto; margin: 0; }
+.is-world .panel { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; will-change: transform; }
+.is-world .panel__in { opacity: 0; transform: translateY(28px); clip-path: inset(0 0 100% 0 round 14px);
+  transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1), clip-path .9s cubic-bezier(.22,1,.36,1); }
+.is-world .panel.is-on .panel__in { opacity: 1; transform: none; clip-path: inset(-80px -80px -80px -80px round 14px); }
+.is-world .track { height: 1000vh; }
+.measuring .panel__in { transform: none !important; transition: none !important; }
+
+/* Tailles des panneaux sur la carte */
+.is-world .p-hero { width: 100vw; height: 100svh; padding: 5rem clamp(1.25rem, 5vw, 4rem) 4rem; display: grid; }
+.is-world .p-hero .panel__in { align-self: center; width: min(1180px, 100%); margin-inline: auto; }
+.is-world .p-about { width: min(1000px, 74vw); }
+.is-world .p-title { width: min(620px, 60vw); }
+.is-world .p-title .panel__in { display: inline-block; background: var(--bg); padding: .15em .35em .2em; margin-left: -.35em; border-radius: 10px; }
+.is-world .p-step { width: clamp(230px, 22vw, 320px); }
+.is-world .p-card { width: clamp(260px, 30vw, 430px); }
+.is-world .p-contact { width: min(820px, 80vw); }
+.is-world .about__text .w { opacity: .22; }
+
+.is-world .hud { display: flex; background: var(--bg); padding: .35rem .7rem; margin-left: -.7rem; border-radius: 999px; position: fixed; left: clamp(1.25rem, 5vw, 4rem); bottom: 1.2rem; z-index: 40; align-items: center; gap: .8rem;
+  font-size: .9rem; color: var(--ink-2); }
+.hud__bar { width: 110px; height: 3px; border-radius: 3px; background: var(--hair); overflow: hidden; }
+.hud__bar span { display: block; height: 100%; width: 100%; background: var(--tone, var(--lagon)); transform-origin: left; transform: scaleX(0); }
+
+@media (max-width: 899px) {
+  .is-world .p-hero .hero { display: block; position: relative; }
+  .is-world .p-hero .hero__portrait { position: absolute; right: 0; top: 0; width: min(30vw, 19svh); }
+  .is-world .hero__where { max-width: 60%; font-size: .92rem; }
+  .is-world .hero__name { font-size: clamp(3rem, min(16vw, 9svh), 5rem); }
+  .is-world .hero__role { margin-top: 1rem; font-size: 1rem; }
+  .is-world .hero__pitch { font-size: .95rem; }
+  .is-world .hero__actions .btn { min-height: 46px; padding: 0 1.1rem; font-size: .95rem; }
+  .is-world .p-about { width: calc(100vw - 2.5rem); }
+  .is-world .about { padding: 1.4rem; gap: 1.2rem; }
+  .is-world .about h2, .is-world .chapter, .is-world .contact h2 { font-size: clamp(2rem, 9vw, 2.6rem); }
+  .is-world .about__text { font-size: 1.08rem; }
+  .is-world .p-title, .is-world .p-step, .is-world .p-contact { width: calc(100vw - 2.5rem); }
+  .is-world .p-card { width: min(80vw, 340px); }
+  .is-world .hud { bottom: .9rem; }
+  .is-world .hud__bar { width: 60px; }
+}
+@media (max-width: 899px) and (max-height: 720px) {
+  .is-world .p-hero { padding-top: 4.4rem; padding-bottom: 3rem; }
+  .is-world .hero__name { font-size: clamp(2.6rem, min(15vw, 8.5svh), 4rem); }
+  .is-world .hero__pitch { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="header__logo" href="#accueil">Maël Llado</a>
+  <nav class="header__nav" aria-label="Sections">
+    <a href="#a-propos">À propos</a><a href="#parcours">Parcours</a><a href="#projets">Projets</a><a href="#contact">Contact</a>
+  </nav>
+  <a class="btn header__cta" href="#contact">M'écrire</a>
+</header>
+
+<div class="hud" aria-hidden="true"><span class="hud__label">Accueil</span><span class="hud__bar"><span></span></span></div>
+<div class="mk" aria-hidden="true"><a id="mk-fond" href="?fond=clair">Fond clair</a><a id="mk-motion" href="?reduced=1">Mouvement réduit</a></div>
+
+<div class="stage">
+  <svg class="trace" aria-hidden="true"></svg>
+  <main class="world">
+
+    <section class="panel p-hero" id="accueil" data-d="0.5,0.5" data-label="Accueil" data-tone="lagon">
+      <div class="panel__in hero">
+        <div class="hero__text">
+          <p class="hero__where">Basé à Bordeaux, je cherche une alternance en développement web.</p>
+          <h1 class="hero__name"><span class="hero__first">Maël</span><span class="hero__last">LLADO</span></h1>
+          <p class="hero__role">Étudiant en 2ᵉ année à Ynov Bordeaux, développeur full stack</p>
+          <p class="hero__pitch">Je développe des applications web en entier : l’interface, l’API, la base de données, puis la mise en ligne sur mon propre serveur.</p>
+          <div class="hero__actions">
+            <a class="btn btn--full" href="#projets">Voir mes projets</a>
+            <a class="btn" href="#contact">M’écrire</a>
+          </div>
+        </div>
+        <div class="hero__portrait tone-lagon lift"><img src="../src/assets/images/portrait.png" alt="Portrait de Maël Llado"></div>
+      </div>
+    </section>
+
+    <section class="panel p-about" id="a-propos" data-d="1.6,1.75" data-label="À propos" data-tone="lagon">
+      <div class="panel__in about tone-lagon lift">
+        <h2>Qui je suis</h2>
+        <p class="about__text">J’ai commencé par les réseaux et la cybersécurité en bac pro. Aujourd’hui je code surtout pour le web, du navigateur jusqu’au serveur. Ce site tourne sur une machine que j’administre : React pour l’interface, une API Express, PostgreSQL, le tout dans Docker derrière Nginx et Cloudflare. J’en modifie le contenu depuis un back-office que j’ai aussi développé.</p>
+        <dl class="facts">
+          <div><dt>Formation</dt><dd>Ynov Campus Bordeaux, 2ᵉ année</dd></div>
+          <div><dt>Diplôme</dt><dd>Bac pro SN option RISC, mention très bien</dd></div>
+          <div><dt>Je cherche</dt><dd>Une alternance en développement web, dès [À PRÉCISER]</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="parcours" class="panel p-title" data-d="0.42,2.55" data-label="Parcours" data-tone="menthe">
+      <div class="panel__in"><h2 class="chapter">Mon parcours</h2></div>
+    </section>
+    <div class="panel p-step" data-d="0.27,2.95" data-step data-label="Parcours" data-tone="menthe"><div class="panel__in step tone-menthe lift"><span class="step__dot"></span><span class="step__when">Lycée professionnel</span><h3>Cybersécurité et réseaux</h3><p>Mes premiers pas en informatique</p></div></div>
+    <div class="panel p-step" data-d="0.53,3.17" data-step data-label="Parcours" data-tone="menthe"><div class="panel__in step tone-menthe lift"><span class="step__dot"></span><span class="step__when">Stage</span><h3>Maintenance et boutique</h3><p>Support et matériel informatique</p></div></div>
+    <div class="panel p-step" data-d="0.79,2.95" data-step data-label="Parcours" data-tone="menthe"><div class="panel__in step tone-menthe lift"><span class="step__dot"></span><span class="step__when">Stage</span><h3>Snark Factory</h3><p>Développement web</p></div></div>
+    <div class="panel p-step" data-d="1.05,3.17" data-step data-label="Parcours" data-tone="menthe"><div class="panel__in step tone-menthe lift"><span class="step__dot"></span><span class="step__when">Aujourd’hui</span><h3>Ynov Campus, 2ᵉ année</h3><p>Étudiant en informatique</p></div></div>
+
+    <section id="projets" class="panel p-title" data-d="1.62,3.62" data-label="Projets" data-tone="mandarine">
+      <div class="panel__in"><h2 class="chapter">Ce que j’ai construit</h2></div>
+    </section>
+    <article class="panel p-card" data-d="1.5,4.08" data-card data-label="Projets" data-tone="mandarine"><a class="panel__in card tone-mandarine lift" href="#"><div class="card__media"><img src="../src/assets/images/Eldoria.webp" alt=""></div><div class="card__body"><p class="card__meta">Ynov B1, en Go</p><h3>Projet_Red : Eldoria</h3></div></a></article>
+    <article class="panel p-card" data-d="2.02,4.36" data-card data-label="Projets" data-tone="mandarine"><a class="panel__in card tone-mandarine lift" href="#"><div class="card__media"><img src="../src/assets/images/FaceRecognition.webp" alt=""></div><div class="card__body"><p class="card__meta">Bac pro SN, en Python</p><h3>Face Recognition</h3></div></a></article>
+    <article class="panel p-card" data-d="1.5,4.64" data-card data-label="Projets" data-tone="mandarine"><a class="panel__in card tone-mandarine lift" href="#"><div class="card__media"><img src="../src/assets/images/CTF.webp" alt=""></div><div class="card__body"><p class="card__meta">Root Me, 2025</p><h3>CTF</h3></div></a></article>
+    <article class="panel p-card" data-d="2.02,4.92" data-card data-label="Projets" data-tone="mandarine"><a class="panel__in card tone-mandarine lift" href="#"><div class="card__media"><img src="../src/assets/images/onepiecedle.png" alt=""></div><div class="card__body"><p class="card__meta">Projet perso, web</p><h3>One Piece DLE</h3></div></a></article>
+    <article class="panel p-card" data-d="1.5,5.2" data-card data-label="Projets" data-tone="mandarine"><a class="panel__in card tone-mandarine lift" href="#"><div class="card__media"><img src="../src/assets/images/cloudperso.png" alt=""></div><div class="card__body"><p class="card__meta">Projet perso, infra</p><h3>Cloud Perso</h3></div></a></article>
+    <article class="panel p-card" data-d="2.02,5.48" data-card data-label="Projets" data-tone="mandarine"><a class="panel__in card tone-mandarine lift" href="#"><div class="card__media"><img src="../src/assets/images/tecktalk.png" alt=""></div><div class="card__body"><p class="card__meta">Ydays, web</p><h3>Tech Talk</h3></div></a></article>
+
+    <section class="panel p-contact" id="contact" data-d="0.95,6.45" data-label="Contact" data-tone="soleil">
+      <div class="panel__in contact">
+        <h2>Vous recrutez un alternant en développement web ?</h2>
+        <p>Le plus simple est de m’écrire. Mon CV et mes profils sont juste en dessous.</p>
+        <a class="btn btn--full contact__cta" href="#">M’écrire</a>
+        <div class="contact__links"><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">Télécharger le CV</a></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="track" aria-hidden="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrambleTextPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
+<script>
+(() => {
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  const REDUCED = params.has("reduced") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+
+  // Liens de la barre de maquette (gardent l'autre réglage)
+  const withParam = (k, v) => { const p = new URLSearchParams(location.search); v === null ? p.delete(k) : p.set(k, v); return "?" + p.toString(); };
+  const clair = root.dataset.fond === "clair";
+  $("#mk-fond").textContent = clair ? "Fond ardoise" : "Fond clair";
+  $("#mk-fond").href = withParam("fond", clair ? "ardoise" : "clair");
+  $("#mk-motion").textContent = REDUCED ? "Avec mouvement" : "Mouvement réduit";
+  $("#mk-motion").href = withParam("reduced", REDUCED ? null : "1");
+
+  // Texte découpé (dans le site : contenu de l'API)
+  const last = $(".hero__last");
+  last.setAttribute("aria-label", last.textContent);
+  last.innerHTML = [...last.textContent].map((c) => `<span class="char" aria-hidden="true">${c}</span>`).join("");
+  const about = $(".about__text");
+  about.innerHTML = about.textContent.split(" ").map((w) => `<span class="w">${w}</span>`).join(" ");
+
+  if (REDUCED) return; // page classique : tout est visible, rien ne bouge
+
+  root.classList.add("is-world");
+  gsap.registerPlugin(ScrollTrigger, ...(window.ScrambleTextPlugin ? [ScrambleTextPlugin] : []));
+  ScrollTrigger.config({ ignoreMobileResize: true });
+  const lenis = new Lenis({ duration: 1.15 });
+  lenis.on("scroll", ScrollTrigger.update);
+  gsap.ticker.add((t) => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = $(".trace");
+  const panels = $$(".panel");
+  const track = $(".track");
+  const hud = { label: $(".hud__label"), bar: $(".hud__bar span") };
+  const STRANDS = [                      // ordre de dessin : la ligne lagon passe devant
+    { color: "--soleil",    width: 1.5, amp: 30, wave: 760,  phase: 0.0 },
+    { color: "--menthe",    width: 2,   amp: 22, wave: 1150, phase: 2.1 },
+    { color: "--mandarine", width: 2,   amp: 38, wave: 940,  phase: 4.0 },
+    { color: "--lagon",     width: 3,   amp: 0,  wave: 1,    phase: 0 },
+  ];
+
+  // Courbe lisse passant par tous les points (Catmull-Rom → Bézier)
+  const smooth = (pts) => {
+    let d = `M ${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += ` C ${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${p2[0]} ${p2[1]}`;
+    }
+    return d;
+  };
+  // Boucle autour du bouton de contact, entrée par la droite
+  const pill = (x, y, w, h) => {
+    const r = h / 2, cy = y + r;
+    return ` L ${x + w} ${cy} A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} H ${x + r} A ${r} ${r} 0 0 1 ${x + r} ${y} H ${x + w - r} A ${r} ${r} 0 0 1 ${x + w} ${cy}`;
+  };
+
+  let st, tl, ctx;
+  const cam = { x: 0, y: 0, s: 1 };
+  const prog = { p: 0 };
+  const intro = { k: 0 };
+
+  const build = () => {
+    const W = innerWidth, H = innerHeight, mobile = W < 900;
+
+    // 1. Mesure des panneaux à plat, puis placement sur la carte
+    root.classList.add("measuring");
+    panels.forEach((el) => { el.style.transform = "none"; });
+    const geo = new Map();
+    panels.forEach((el) => geo.set(el, { w: el.offsetWidth, h: el.offsetHeight }));
+    if (mobile) {
+      // Sur mobile : une colonne qui ondule, les groupes plus serrés
+      let y = H; let prevGroup = "hero";
+      panels.forEach((el, i) => {
+        const g = geo.get(el);
+        if (i === 0) { g.x = W / 2; g.y = H / 2; return; }
+        const group = el.dataset.step !== undefined ? "step" : el.dataset.card !== undefined ? "card" : el.id || "x";
+        const gap = (group === prevGroup && (group === "step" || group === "card")) ? H * .07 : H * .3;
+        const sway = el.dataset.card !== undefined ? ($$("[data-card]").indexOf(el) % 2 ? 1 : -1) * W * .05 : 0;
+        g.x = W / 2 + sway; g.y = y + gap + g.h / 2; y = g.y + g.h / 2; prevGroup = group;
+      });
+    } else {
+      panels.forEach((el) => { const [u, v] = el.dataset.d.split(",").map(Number); const g = geo.get(el); g.x = u * W; g.y = v * H; });
+    }
+
+    // Bouton de contact en coordonnées de la carte
+    const contact = $("#contact"), cta = $(".contact__cta");
+    const cg = geo.get(contact);
+    const cr = cta.getBoundingClientRect(), pr = contact.getBoundingClientRect();
+    const ctaW = { x: cg.x - cg.w / 2 + (cr.left - pr.left), y: cg.y - cg.h / 2 + (cr.top - pr.top), w: cr.width, h: cr.height };
+    root.classList.remove("measuring");
+
+    // 2. Le tracé principal : points de passage dessinés à la main (desktop) ou générés (mobile)
+    const steps = $$("[data-step]").map((el) => geo.get(el));
+    const dot = (g) => [g.x - g.w / 2 + 20.8 + 7, g.y - g.h / 2];   // centre de la pastille de l'étape
+    let pts, key;
+    if (!mobile) {
+      const P = (u, v) => [u * W, v * H];
+      pts = [P(-.3, .88), P(.12, .84), P(.5, .9), P(.95, .97), P(1.13, 1.22), P(1.18, 1.42), P(1.6, 1.3),
+             P(2.08, 1.5), P(2.1, 1.98), P(1.7, 2.2), P(1.15, 2.22), P(.72, 2.36), P(.08, 2.46), P(.06, 2.74),
+             ...steps.map(dot), P(1.3, 3.0), P(1.42, 3.36), P(2.28, 3.62),
+             P(1.76, 3.98), P(1.84, 4.24), P(1.72, 4.5), P(1.84, 4.78), P(1.72, 5.06), P(1.84, 5.34), P(1.74, 5.62),
+             P(1.62, 5.95), P(1.25, 6.02), [ctaW.x + ctaW.w + W * .32, ctaW.y - H * .2], [ctaW.x + ctaW.w + W * .08, ctaW.y + ctaW.h / 2]];
+      key = { hero: 3, aboutIn: 6, aboutOut: 10, step1: 14, step4: 17, projIn: 21, projOut: 27, beforeContact: 29 };
+    } else {
+      pts = [[-W * .3, H * .87], [W * .45, H * .89], [W * 1.05, H * 1.0]];
+      key = { hero: 1 };
+      let side = -1;
+      panels.slice(1).forEach((el, i, arr) => {
+        const g = geo.get(el);
+        if (el.dataset.step !== undefined) { pts.push(dot(g)); if (key.step1 === undefined) key.step1 = pts.length - 1; key.step4 = pts.length - 1; return; }
+        const next = arr[i + 1] && geo.get(arr[i + 1]);
+        if (!next) return;
+        if (el.id === "a-propos") key.aboutIn = pts.length;
+        if (el.dataset.card !== undefined && key.projIn === undefined) key.projIn = pts.length;
+        pts.push([W / 2 + side * W * .42, (g.y + g.h / 2 + next.y - next.h / 2) / 2]);
+        if (el.id === "a-propos") key.aboutOut = pts.length - 1;
+        if (el.dataset.card !== undefined) key.projOut = pts.length - 1;
+        side *= -1;
+      });
+      pts.push([ctaW.x + ctaW.w + W * .1, ctaW.y - H * .12], [ctaW.x + ctaW.w + W * .06, ctaW.y + ctaW.h / 2]);
+      key.beforeContact = pts.length - 2;
+    }
+    const mainD = smooth(pts) + pill(ctaW.x - 12, ctaW.y - 12, ctaW.w + 24, ctaW.h + 24);
+
+    // 3. Échantillonnage du tracé, puis les trois brins qui s'en écartent et y reviennent
+    svg.innerHTML = "";
+    const probe = document.createElementNS(NS, "path");
+    probe.setAttribute("d", mainD); svg.append(probe);
+    const total = probe.getTotalLength();
+    const N = mobile ? 700 : 1100;
+    const S = Array.from({ length: N + 1 }, (_, i) => { const p = probe.getPointAtLength(total * i / N); return [p.x, p.y]; });
+    probe.remove();
+    const fracOf = ([x, y]) => { let b = 0, bd = Infinity; S.forEach((s, i) => { const d = (s[0] - x) ** 2 + (s[1] - y) ** 2; if (d < bd) { bd = d; b = i; } }); return b / N; };
+    const F = Object.fromEntries(Object.entries(key).map(([k, i]) => [k, fracOf(pts[i])]));
+    const env = (t) => Math.min(1, t / .03) * Math.max(0, Math.min(1, (F.beforeContact - t) / .03));
+    const strands = STRANDS.map((cfg) => {
+      let d;
+      if (!cfg.amp) d = mainD;
+      else {
+        const amp = cfg.amp * (mobile ? .6 : 1);
+        d = S.map((s, i) => {
+          const a = S[Math.max(0, i - 1)], b = S[Math.min(N, i + 1)];
+          const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
+          const t = i / N, off = amp * env(t) * Math.sin((t * total) / cfg.wave * Math.PI * 2 + cfg.phase);
+          return `${i ? "L" : "M"} ${(s[0] - dy / len * off).toFixed(1)} ${(s[1] + dx / len * off).toFixed(1)}`;
+        }).join(" ");
+      }
+      const el = document.createElementNS(NS, "path");
+      el.setAttribute("d", d);
+      el.style.stroke = `var(${cfg.color})`;
+      el.style.strokeWidth = (mobile ? .8 : 1) * cfg.width;
+      svg.append(el);
+      const L = el.getTotalLength();
+      return { el, L };
+    });
+
+    // 4. Seuil d'apparition de chaque panneau : quand le tracé passe à sa hauteur
+    panels.forEach((el) => { const g = geo.get(el); g.on = el.id === "accueil" ? 0 : Math.max(0, fracOf([g.x, g.y]) - .025); g.shown = null; });
+    const aboutPanel = $("#a-propos"); geo.get(aboutPanel).on = Math.max(0, F.aboutIn - .02);
+
+    // Rendu d'une image : caméra → viewBox du tracé + position de chaque panneau
+    const setters = panels.map((el) => ({ el, g: geo.get(el) }));
+    const render = () => {
+      const p = prog.p * intro.k;
+      // non-scaling-stroke : les tirets se mesurent en pixels écran, donc à l'échelle de la caméra.
+      // Sans ce facteur, la ligne paraît entière quand la caméra recule, puis se recoupe d'un coup.
+      strands.forEach(({ el, L }) => {
+        const Ls = L * cam.s;
+        el.style.strokeDasharray = `${Ls} ${Ls + 10}`;
+        el.style.strokeDashoffset = Ls * (1 - p);
+      });
+      svg.setAttribute("viewBox", `${cam.x - W / 2 / cam.s} ${cam.y - H / 2 / cam.s} ${W / cam.s} ${H / cam.s}`);
+      setters.forEach(({ el, g }) => {
+        const sx = (g.x - cam.x) * cam.s + W / 2, sy = (g.y - cam.y) * cam.s + H / 2;
+        const out = sx + g.w * cam.s / 2 < -200 || sx - g.w * cam.s / 2 > W + 200 || sy + g.h * cam.s / 2 < -200 || sy - g.h * cam.s / 2 > H + 200;
+        el.style.visibility = out ? "hidden" : "visible";
+        el.style.transform = `translate3d(${(sx - g.w / 2).toFixed(1)}px, ${(sy - g.h / 2).toFixed(1)}px, 0) scale(${cam.s.toFixed(4)})`;
+        const on = p >= g.on;
+        if (on !== g.shown) { g.shown = on; el.classList.toggle("is-on", on); }
+      });
+    };
+
+    // 5. Les arrêts de caméra
+    const C = (el) => { const g = geo.get(el); return [g.x, g.y]; };
+    const group = (els) => {
+      const gs = els.map((e) => geo.get(e));
+      const x0 = Math.min(...gs.map((g) => g.x - g.w / 2)), x1 = Math.max(...gs.map((g) => g.x + g.w / 2));
+      const y0 = Math.min(...gs.map((g) => g.y - g.h / 2)), y1 = Math.max(...gs.map((g) => g.y + g.h / 2));
+      return { c: [(x0 + x1) / 2, (y0 + y1) / 2], s: Math.min(1, (W * .9) / (x1 - x0), (H * .8) / (y1 - y0)) };
+    };
+    const parc = group([$("#parcours"), ...$$("[data-step]")]);
+    const cards = $$("[data-card]");
+    const xs = [...S.map((s) => s[0]), ...[...geo.values()].flatMap((g) => [g.x - g.w / 2, g.x + g.w / 2])], ys = [...S.map((s) => s[1]), ...[...geo.values()].flatMap((g) => [g.y - g.h / 2, g.y + g.h / 2])];
+    const map = { c: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2],
+                  s: Math.min((W * .9) / (Math.max(...xs) - Math.min(...xs)), (H * .86) / (Math.max(...ys) - Math.min(...ys))) };
+    const STOPS = [
+      { id: "accueil",  c: C(panels[0]), s: 1, p: F.hero, hold: .35 },
+      { id: "a-propos", c: C(aboutPanel), s: mobile ? Math.min(1, H * .84 / geo.get(aboutPanel).h) : 1, p: F.aboutIn, hold: 1.1, pEnd: F.aboutOut },
+      { id: "parcours", c: parc.c, s: parc.s, p: F.step1 - .01, hold: 1.1, pEnd: F.step4 + .005 },
+      { id: "projets",  c: C(cards[0]), s: 1, p: F.projIn, hold: 2.6, pEnd: F.projOut, cEnd: C(cards[cards.length - 1]) },
+      { id: "carte",    c: map.c, s: map.s, p: F.beforeContact, hold: .55 },
+      { id: "contact",  c: C(contact), s: 1, p: 1, hold: .9 },
+    ];
+    if (!mobile) STOPS[3].c = [W * 1.76, cards[0] && geo.get(cards[0]).y + H * .1], STOPS[3].cEnd = [W * 1.76, geo.get(cards[cards.length - 1]).y - H * .1];
+
+    tl = gsap.timeline({ defaults: { ease: "none", immediateRender: false }, onUpdate: render });
+    Object.assign(cam, { x: STOPS[0].c[0], y: STOPS[0].c[1], s: 1 });
+    prog.p = F.hero;
+    let t = 0;
+    const MOVE = 1.15;
+    STOPS.forEach((stop, i) => {
+      if (i > 0) {
+        const prev = STOPS[i - 1];
+        const from = prev.cEnd || prev.c;
+        // Trajet : la caméra glisse, prend du recul au milieu, puis se pose
+        tl.fromTo(cam, { x: from[0], y: from[1] }, { x: stop.c[0], y: stop.c[1], duration: MOVE, ease: "power2.inOut" }, t);
+        const dip = stop.id === "carte" || prev.id === "carte" ? stop.s : Math.min(prev.s, stop.s) * (mobile ? .82 : .72);
+        if (stop.id === "carte" || prev.id === "carte") tl.fromTo(cam, { s: prev.s }, { s: stop.s, duration: MOVE, ease: "power3.inOut" }, t);
+        else tl.fromTo(cam, { s: prev.s }, { s: dip, duration: MOVE / 2, ease: "sine.out" }, t).to(cam, { s: stop.s, duration: MOVE / 2, ease: "sine.in" }, t + MOVE / 2);
+        tl.fromTo(prog, { p: prev.pEnd ?? prev.p }, { p: stop.p, duration: MOVE, ease: "power1.inOut" }, t);
+        t += MOVE;
+      }
+      tl.addLabel(stop.id, t);
+      if (stop.pEnd !== undefined) tl.fromTo(prog, { p: stop.p }, { p: stop.pEnd, duration: stop.hold }, t);
+      if (stop.cEnd) tl.fromTo(cam, { x: stop.c[0], y: stop.c[1] }, { x: stop.cEnd[0], y: stop.cEnd[1], duration: stop.hold, ease: "sine.inOut" }, t);
+      if (stop.id === "a-propos") tl.fromTo(".about__text .w", { opacity: .22 }, { opacity: 1, stagger: .025, duration: .25 }, t + .05);
+      t += stop.hold;
+    });
+    tl.set({}, {}, t);
+
+    // Repères du HUD
+    const marks = STOPS.map((s) => ({ at: tl.labels[s.id], el: s.id === "carte" ? null : $("#" + s.id) }));
+    tl.eventCallback("onUpdate", () => {
+      render();
+      const now = tl.time();
+      let cur = marks[0];
+      marks.forEach((m) => { if (now >= m.at - MOVE / 2) cur = m; });
+      const el = cur.el || $("#projets");
+      hud.label.textContent = cur.el ? el.dataset.label : "Vue d’ensemble";
+      hud.bar.parentElement.style.setProperty("--tone", `var(--${el.dataset.tone})`);
+      hud.bar.style.transform = `scaleX(${now / t})`;
+    });
+
+    track.style.height = `${t * H * (mobile ? .9 : 1) + H}px`;
+    st = ScrollTrigger.create({ trigger: track, start: "top top", end: "bottom bottom", scrub: .8, animation: tl });
+    render();
+    return { render };
+  };
+
+  // Liens internes : on voyage jusqu'au chapitre
+  const goTo = (id) => {
+    if (!st || tl.labels[id] === undefined) return;
+    lenis.scrollTo(st.start + (tl.labels[id] / tl.duration()) * (st.end - st.start), { duration: 2 });
+  };
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a || a.getAttribute("href") === "#") return;
+    e.preventDefault(); goTo(a.getAttribute("href").slice(1));
+  });
+
+  let api;
+  const start = () => { ctx = gsap.context(() => { api = build(); }); ScrollTrigger.refresh(); };
+  let lastW = innerWidth, timer;
+  addEventListener("resize", () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth; clearTimeout(timer);
+    timer = setTimeout(() => { const p = st ? st.progress : 0; ctx && ctx.revert(); start(); lenis.scrollTo(st.start + p * (st.end - st.start), { immediate: true }); }, 250);
+  });
+
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => requestAnimationFrame(() => {
+    lenis.scrollTo(0, { immediate: true });
+    start();
+    // Intro : le tracé part de la gauche et passe sous le nom
+    const t0 = gsap.timeline({ defaults: { ease: "power3.out" } });
+    t0.to(intro, { k: 1, duration: 1.8, ease: "power2.inOut", onUpdate: () => api && api.render() }, .3)
+      .from(".hero__where", { opacity: 0, y: 14, duration: .6 }, 0)
+      .from(".hero__last .char", { yPercent: 105, opacity: 0, duration: .9, stagger: .05, ease: "power4.out" }, .15)
+      .fromTo(".hero__portrait", { clipPath: "inset(100% 0% 0% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.2, ease: "power4.inOut", clearProps: "clipPath" }, .2)
+      .from(".hero__role, .hero__pitch, .hero__actions .btn", { opacity: 0, y: 16, duration: .7, stagger: .07 }, .8)
+      .from(".header, .hud", { opacity: 0, duration: .6 }, 1.1);
+    if (window.ScrambleTextPlugin) t0.to(".hero__first", { duration: .9, scrambleText: { text: "Maël", chars: "lowerCase", speed: .5 } }, 0);
+  }));
+})();
+</script>
+</body>
+</html>
