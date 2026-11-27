@@ -22,7 +22,7 @@ interface WorldProps {
  * Mouvement réduit : les mêmes enfants s'affichent en page classique, sans ligne.
  */
 function World({ ready, children }: WorldProps) {
-  const active = useRef(!prefersReducedMotion()).current;
+  const [active] = useState(() => !prefersReducedMotion());
   const wrapperRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
