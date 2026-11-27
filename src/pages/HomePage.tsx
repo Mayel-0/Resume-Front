@@ -31,12 +31,12 @@ function HomePage() {
 
   const requests = [siteTexts, profil, heroLayers, socials, timeline, sections, projects, projectsTags, briefs, skillCategories, skillsItems];
   const isLoading = requests.some((request) => request.loading);
-  const hasError = requests.some((request) => request.error);
+  const failure = requests.find((request) => request.error)?.error;
 
   // Le rideau (preloader / transition) se lève quand tout est chargé
   usePageReady(!isLoading);
 
-  if (hasError) return <ApiError />;
+  if (failure) return <ApiError error={failure} />;
   // Les titres sont découpés au montage : il leur faut leur texte dès le départ
   if (siteTexts.loading) return <main />;
 
