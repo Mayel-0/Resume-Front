@@ -3,6 +3,7 @@ import SplitType from "split-type";
 import { useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion, canHover } from "../lib/gsap";
 import { useTransition } from "../context/transitionContext";
+import { useWorldActive } from "../context/worldContext";
 import { assetUrl, CV_URL, CV_FILENAME } from "../lib/api";
 import TransitionLink from "./transitionLink";
 import type { Profile, Social } from "../models";
@@ -20,6 +21,7 @@ function Hero({ profil, socials = [] }: HeroProps) {
   const lastNameHero = useRef<HTMLSpanElement>(null);
   const locationRef = useRef<HTMLSpanElement>(null);
   const { revealed } = useTransition();
+  const world = useWorldActive();
 
   useGSAP(
     () => {
@@ -210,22 +212,25 @@ function Hero({ profil, socials = [] }: HeroProps) {
 
       // --- Sortie au scroll : le texte s'efface, le portrait
       // descend moins vite que la page (profondeur) --------------
-      gsap.to(".hero__text", {
-        yPercent: -16,
-        opacity: 0.1,
-        ease: "none",
-        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
-      });
-      gsap.to(".hero__portrait-wrap", {
-        yPercent: 12,
-        ease: "none",
-        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
-      });
-      gsap.to(".hero__bg", {
-        yPercent: 22,
-        ease: "none",
-        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
-      });
+      // Dans le monde, la caméra déplace le hero : pas de parallaxe au scroll
+      if (!world) {
+        gsap.to(".hero__text", {
+          yPercent: -16,
+          opacity: 0.1,
+          ease: "none",
+          scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
+        });
+        gsap.to(".hero__portrait-wrap", {
+          yPercent: 12,
+          ease: "none",
+          scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
+        });
+        gsap.to(".hero__bg", {
+          yPercent: 22,
+          ease: "none",
+          scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
+        });
+      }
 
       // --- Parallaxe à la souris (portrait + halo) -------------
       const portraitImg = root.querySelector(".hero__portrait img");
@@ -262,7 +267,7 @@ function Hero({ profil, socials = [] }: HeroProps) {
     },
     {
       scope: containerHero,
-      dependencies: [revealed, profil?.firstName, profil?.lastName],
+      dependencies: [revealed, profil?.firstName, profil?.lastName, world],
       revertOnUpdate: true,
     }
   );

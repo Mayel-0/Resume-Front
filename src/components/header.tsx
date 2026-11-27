@@ -143,6 +143,14 @@ function Header() {
 
     const updateActiveSection = () => {
       const activationLine = Math.min(window.innerHeight * 0.35, 260);
+      // Dans le monde, les panneaux sont déplacés par la caméra : l'arrêt courant fait foi
+      const stage = document.querySelector<HTMLElement>(".is-world .world__stage");
+      const worldStop = stage && stage.getBoundingClientRect().bottom > activationLine ? stage.dataset.stop : undefined;
+      if (worldStop) {
+        setActiveSection(worldStop === "hero" ? "" : worldStop);
+        frameId = undefined;
+        return;
+      }
       const currentSection = SECTIONS.map(({ id }) => document.getElementById(id))
         .filter((section): section is HTMLElement => section !== null)
         .find((section) => {

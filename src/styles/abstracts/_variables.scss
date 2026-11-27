@@ -16,6 +16,14 @@
   --border: rgba(var(--veil), 0.09);
   --border-strong: rgba(var(--veil), 0.16);
 
+  // Les quatre couleurs de la ligne : une par chapitre
+  --lagon: #33c4f2;
+  --menthe: #44d6a0;
+  --mandarine: #ff8b42;
+  --soleil: #ffd04d;
+  --shadow-a: 0.62;
+  --shadow-b: 0.34;
+
   --bg: #0a0b0d;
   --bg-2: #0f1114;
 
@@ -42,6 +50,12 @@
     --text-3: #6b7078;
     --accent: #0b93c6;
     --accent-ink: color-mix(in srgb, var(--accent) 92%, black 8%);
+    --lagon: #0b93c6;
+    --menthe: #0e9a6c;
+    --mandarine: #e2621a;
+    --soleil: #d39e00;
+    --shadow-a: 0.52;
+    --shadow-b: 0.28;
     --bg: #e7e6e2;
     --bg-2: #f7f6f3;
   }

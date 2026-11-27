@@ -1,6 +1,8 @@
 import Hero from '../components/hero'
 import About from '../components/about'
-import Parcours from '../components/parcours'
+import Parcours, { ParcoursNarrative } from '../components/parcours'
+import World from '../components/world'
+import WorldPanel from '../components/worldPanel'
 import Skills from '../components/skills'
 import Projects from '../components/projects'
 import Contacts from '../components/contacts'
@@ -33,10 +35,15 @@ function HomePage() {
 
   return (
     <main>
-      <Hero profil={profil.data[0]} socials={socials.data} />
+      <World ready={!isLoading}>
+        <WorldPanel kind="hero" d="0.5,0.5" label="Accueil" tone="lagon" anchor="hero">
+          <Hero profil={profil.data[0]} socials={socials.data} />
+        </WorldPanel>
+        <About briefs={briefs.data} />
+        <Parcours timeline={timeline.data} />
+      </World>
       <Marquee items={skillsItems.data.map((item) => item.label)} duration={60} />
-      <About briefs={briefs.data} />
-      <Parcours timeline={timeline.data} sections={sections.data}/>
+      <ParcoursNarrative sections={sections.data} />
       <Skills skillCategories={skillCategories.data} skillsItems={skillsItems.data} />
       <Projects projects={projects.data} projectsTags={projectsTags.data}/>
       <Contacts socials={socials.data} />
