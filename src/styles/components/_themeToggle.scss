@@ -1,0 +1,28 @@
+// Bouton discret en bas à droite : translucide, s'efface presque tant qu'on ne le survole pas
+.theme-toggle {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface-strong);
+  color: var(--text-2);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+
+  &:hover,
+  &:focus-visible {
+    opacity: 1;
+    color: var(--accent);
+    border-color: var(--accent-line);
+  }
+}

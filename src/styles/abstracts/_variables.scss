@@ -40,25 +40,39 @@
   --dur-slow: 0.9s;
 }
 
-// Thème clair : suit le réglage du système (palette « Clair » de la maquette)
+// Thème clair (palette « Clair » de la maquette)
+@mixin light-palette {
+  color-scheme: light;
+  --veil: 23, 25, 28;
+  --shadow-ink: 23, 25, 28;
+  --text: #17191c;
+  --text-2: #4b5058;
+  --text-3: #6b7078;
+  --accent: #0b93c6;
+  --accent-ink: color-mix(in srgb, var(--accent) 92%, black 8%);
+  --lagon: #0b93c6;
+  --menthe: #0e9a6c;
+  --mandarine: #e2621a;
+  --soleil: #d39e00;
+  --shadow-a: 0.52;
+  --shadow-b: 0.28;
+  --bg: #e7e6e2;
+  --bg-2: #f7f6f3;
+}
+
+// Par défaut : réglage du système ; le bouton pose data-theme pour forcer l'autre thème
 @media (prefers-color-scheme: light) {
-  :root {
-    --veil: 23, 25, 28;
-    --shadow-ink: 23, 25, 28;
-    --text: #17191c;
-    --text-2: #4b5058;
-    --text-3: #6b7078;
-    --accent: #0b93c6;
-    --accent-ink: color-mix(in srgb, var(--accent) 92%, black 8%);
-    --lagon: #0b93c6;
-    --menthe: #0e9a6c;
-    --mandarine: #e2621a;
-    --soleil: #d39e00;
-    --shadow-a: 0.52;
-    --shadow-b: 0.28;
-    --bg: #e7e6e2;
-    --bg-2: #f7f6f3;
+  :root:not([data-theme='dark']) {
+    @include light-palette;
   }
+}
+
+:root[data-theme='light'] {
+  @include light-palette;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
 }
 
 // Définition des tailles
