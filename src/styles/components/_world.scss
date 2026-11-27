@@ -32,6 +32,24 @@ $hud-bottom: 1.2rem;
     }
   }
 
+  .world__helix {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2; // brins côté caméra : entre les fiches de derrière et celles de devant
+    pointer-events: none;
+
+    path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+  }
+
+  .world__trace .is-back { opacity: 0.32; } // brins de l'hélice côté opposé
+
   .panel {
     position: absolute;
     left: 0;
@@ -62,6 +80,25 @@ $hud-bottom: 1.2rem;
     opacity: 1;
     transform: none;
     clip-path: inset(-#{$reveal-margin} round 14px);
+  }
+
+  // Transport vers un lien : un panneau reste caché (is-hold) tant que les lignes ne sont
+  // pas revenues, puis il est libéré et se découvre comme d'habitude ; le hero, sans
+  // transition de base, se découvre en fondu.
+  .panel.is-hold .panel__in {
+    opacity: 0 !important;
+    transform: translateY(28px) !important;
+    clip-path: inset(0 0 100% 0 round 14px) !important;
+    transition: none !important;
+  }
+
+  .p-hero.is-hold .panel__in {
+    transform: none !important;
+    clip-path: none !important;
+  }
+
+  .p-hero.is-release .panel__in {
+    transition: opacity 0.8s var(--ease);
   }
 
   .measuring .panel__in {
@@ -106,10 +143,12 @@ $hud-bottom: 1.2rem;
   }
 
   .p-about { width: min(1000px, 74vw); }
-  .p-title { width: min(620px, 60vw); }
+  .p-title, .p-ptitle { width: min(620px, 60vw); }
+  .p-card { width: min(780px, 62vw); backface-visibility: hidden; cursor: pointer; }
   .p-step { width: clamp(230px, 22vw, 320px); }
 
-  .p-title .panel__in {
+  .p-title .panel__in,
+  .p-ptitle .panel__in {
     display: inline-block;
     background: var(--bg);
     padding: 0.15em 0.35em 0.2em;
@@ -166,6 +205,24 @@ $hud-bottom: 1.2rem;
     }
   }
 
+  // Fiche projet : image à gauche, texte à droite. Description, technos et liens
+  // n'apparaissent que sur la fiche de face (--focus, posé par le moteur).
+  .fiche {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    border-radius: 8px;
+    overflow: hidden;
+
+    &__media { min-height: 300px; overflow: hidden; img { width: 100%; height: 100%; object-fit: cover; } }
+    &__body { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.5rem 1.6rem; h3 { font-size: clamp(1.6rem, 2.6vw, 2.25rem); font-weight: 600; } }
+    &__when { color: var(--text-2); font-size: 0.92rem; }
+    &__more { display: flex; flex-direction: column; gap: 0.7rem; flex: 1; margin-top: 0.3rem; opacity: var(--focus, 1); }
+    &__intro { color: var(--text-2); font-size: 0.98rem; max-width: 40ch; }
+    &__tags { color: var(--mandarine); font-weight: 600; font-size: 0.92rem; }
+    &__links { display: flex; gap: 1.2rem; margin-top: auto; flex-wrap: wrap; }
+    &__link { display: inline-flex; align-items: center; gap: 0.4rem; padding-bottom: 2px; font-weight: 600; border-bottom: 1.5px solid var(--mandarine); }
+  }
+
   .about__text .word { opacity: 0.22; }
 
   .world__hud {
@@ -203,8 +260,12 @@ $hud-bottom: 1.2rem;
 @include respond-to(tablet) {
   .is-world {
     .p-about { width: calc(100vw - 2.5rem); }
-    .p-title, .p-step { width: calc(100vw - 2.5rem); }
+    .p-title, .p-ptitle, .p-step, .p-card { width: calc(100vw - 2.5rem); }
     .about-card { grid-template-columns: 1fr; gap: 1.2rem; padding: 1.4rem; }
+    .fiche { grid-template-columns: 1fr; }
+    .fiche__media { min-height: 0; aspect-ratio: 16 / 9; }
+    .fiche__body { padding: 1.1rem 1.2rem 1.2rem; gap: 0.4rem; }
+    .fiche__body h3 { font-size: 1.6rem; }
     .about-card h2, .chapter { font-size: clamp(2rem, 9vw, 2.6rem); }
   }
 }

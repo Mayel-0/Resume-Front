@@ -3,6 +3,7 @@ import { gsap, ScrollTrigger, prefersReducedMotion } from "../lib/gsap";
 import { getLenis } from "../lib/lenis";
 import { buildWorld, type WorldHandle } from "../lib/world/buildWorld";
 import { setWorldTargets } from "../lib/world/targets";
+import { killWarp } from "../lib/world/warp";
 import { useTransition } from "../context/transitionContext";
 import { WorldContext } from "../context/worldContext";
 
@@ -26,6 +27,7 @@ function World({ ready, children }: WorldProps) {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const helixSvgRef = useRef<SVGSVGElement>(null);
   const hudLabelRef = useRef<HTMLSpanElement>(null);
   const hudBarRef = useRef<HTMLSpanElement>(null);
   const [handle, setHandle] = useState<WorldHandle | null>(null);
@@ -36,9 +38,10 @@ function World({ ready, children }: WorldProps) {
     const wrapper = wrapperRef.current;
     const stage = stageRef.current;
     const svg = svgRef.current;
+    const helixSvg = helixSvgRef.current;
     const hudLabel = hudLabelRef.current;
     const hudBar = hudBarRef.current;
-    if (!wrapper || !stage || !svg || !hudLabel || !hudBar) return undefined;
+    if (!wrapper || !stage || !svg || !helixSvg || !hudLabel || !hudBar) return undefined;
 
     let ctx: gsap.Context | undefined;
     let current: WorldHandle | null = null;
@@ -48,7 +51,7 @@ function World({ ready, children }: WorldProps) {
 
     const start = (progress = 0) => {
       ctx = gsap.context(() => {
-        current = buildWorld({ wrapper, stage, svg, hudLabel, hudBar });
+        current = buildWorld({ wrapper, stage, svg, helixSvg, hudLabel, hudBar });
       });
       ScrollTrigger.refresh();
       setWorldTargets(current?.targets() ?? {});
@@ -56,11 +59,16 @@ function World({ ready, children }: WorldProps) {
       setHandle(current ?? null);
     };
     const clear = () => {
+      killWarp();
       ctx?.revert();
       stage.querySelectorAll<HTMLElement>("[data-panel]").forEach((el) => {
         el.style.transform = "";
         el.style.visibility = "";
-        el.classList.remove("is-on");
+        el.style.opacity = "";
+        el.style.zIndex = "";
+        el.style.removeProperty("--focus");
+        el.onclick = null;
+        el.classList.remove("is-on", "is-hold", "is-release");
       });
       wrapper.style.height = "";
     };
@@ -113,6 +121,7 @@ function World({ ready, children }: WorldProps) {
       <div className={`world${active ? " is-world" : ""}`} ref={wrapperRef}>
         <div className="world__stage" ref={stageRef}>
           {active && <svg className="world__trace" ref={svgRef} aria-hidden="true" focusable="false" />}
+          {active && <svg className="world__helix" ref={helixSvgRef} aria-hidden="true" focusable="false" />}
           {children}
           {active && (
             <div className="world__hud" aria-hidden="true">
