@@ -3,23 +3,28 @@ import SplitType from "split-type";
 import { useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion, canHover } from "../lib/gsap";
 import { useTransition } from "../context/transitionContext";
+import { useWorldActive } from "../context/worldContext";
 import { assetUrl, CV_URL, CV_FILENAME } from "../lib/api";
 import TransitionLink from "./transitionLink";
-import type { Profile, Social } from "../models";
+import type { HeroLayer, Profile, Social } from "../models";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 interface HeroProps {
   /** Absent tant que l'API n'a pas répondu */
   profil?: Profile;
+  layers?: HeroLayer[];
   socials?: Social[];
 }
 
-function Hero({ profil, socials = [] }: HeroProps) {
+function Hero({ profil, layers = [], socials = [] }: HeroProps) {
+  const { t } = useSiteTexts();
   const containerHero = useRef<HTMLElement>(null);
   const firstNameHero = useRef<HTMLSpanElement>(null);
   const HeroPortrait = useRef<HTMLDivElement>(null);
   const lastNameHero = useRef<HTMLSpanElement>(null);
   const locationRef = useRef<HTMLSpanElement>(null);
   const { revealed } = useTransition();
+  const world = useWorldActive();
 
   useGSAP(
     () => {
@@ -45,6 +50,7 @@ function Hero({ profil, socials = [] }: HeroProps) {
       const actionBtns = root.querySelectorAll(".hero__actions .btn");
       const role = root.querySelector(".hero__role");
       const tagline = root.querySelector(".hero__tagline");
+      const layerRows = root.querySelectorAll(".hero__layers li");
       // La valeur cible est mémorisée : le texte passe à 0 pendant l'animation
       const counters = Array.from(
         root.querySelectorAll<HTMLElement>(".hero__highlights strong")
@@ -121,6 +127,12 @@ function Hero({ profil, socials = [] }: HeroProps) {
       // 5. Rôle + tagline
       tl.fromTo(role, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.7 }, 1.25);
       tl.fromTo(tagline, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.7 }, 1.4);
+      tl.fromTo(
+        layerRows,
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.5, stagger: 0.08 },
+        1.5
+      );
 
       // 6. Boutons d'action
       tl.fromTo(
@@ -210,22 +222,25 @@ function Hero({ profil, socials = [] }: HeroProps) {
 
       // --- Sortie au scroll : le texte s'efface, le portrait
       // descend moins vite que la page (profondeur) --------------
-      gsap.to(".hero__text", {
-        yPercent: -16,
-        opacity: 0.1,
-        ease: "none",
-        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
-      });
-      gsap.to(".hero__portrait-wrap", {
-        yPercent: 12,
-        ease: "none",
-        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
-      });
-      gsap.to(".hero__bg", {
-        yPercent: 22,
-        ease: "none",
-        scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
-      });
+      // Dans le monde, la caméra déplace le hero : pas de parallaxe au scroll
+      if (!world) {
+        gsap.to(".hero__text", {
+          yPercent: -16,
+          opacity: 0.1,
+          ease: "none",
+          scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
+        });
+        gsap.to(".hero__portrait-wrap", {
+          yPercent: 12,
+          ease: "none",
+          scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
+        });
+        gsap.to(".hero__bg", {
+          yPercent: 22,
+          ease: "none",
+          scrollTrigger: { trigger: root, start: "top top", end: "bottom top", scrub: true },
+        });
+      }
 
       // --- Parallaxe à la souris (portrait + halo) -------------
       const portraitImg = root.querySelector(".hero__portrait img");
@@ -262,7 +277,7 @@ function Hero({ profil, socials = [] }: HeroProps) {
     },
     {
       scope: containerHero,
-      dependencies: [revealed, profil?.firstName, profil?.lastName],
+      dependencies: [revealed, profil?.firstName, profil?.lastName, world],
       revertOnUpdate: true,
     }
   );
@@ -287,13 +302,22 @@ function Hero({ profil, socials = [] }: HeroProps) {
           <p className="hero__role">{profil?.role}</p>
           <p className="hero__tagline">{profil?.tagline}</p>
 
+          <ul className="hero__layers">
+            {layers.map((item) => (
+              <li key={item.id}>
+                <strong>{item.layer}</strong>
+                <span>{item.tools}</span>
+              </li>
+            ))}
+          </ul>
+
           <div className="hero__actions">
             <TransitionLink className="btn btn--accent" to="/#projets" data-magnetic="0.3">
-              Voir mes projets
+              {t("cta.viewProjects")}
               <MoveRight size={24} aria-hidden="true" />
             </TransitionLink>
             <a className="btn" href={CV_URL} download={CV_FILENAME} data-magnetic="0.3">
-              Télécharger le CV
+              {t("cta.downloadCv")}
             </a>
           </div>
 
@@ -333,20 +357,20 @@ function Hero({ profil, socials = [] }: HeroProps) {
       <div className="shell">
         <ul className="hero__highlights">
           <li>
-            <strong>Ynov campus</strong>
-            <span>Informatique</span>
+            <strong>{t("hero.degree")}</strong>
+            <span>{t("hero.degreeField")}</span>
           </li>
           <li>
-            <strong>Bac Pro SN</strong>
-            <span>option RISC — mention Très Bien (MDP)</span>
+            <strong>{t("hero.bacTitle")}</strong>
+            <span>{t("hero.bac")}</span>
           </li>
           <li>
             <strong>11</strong>
-            <span>projets réalisés</span>
+            <span>{t("hero.projectsCount")}</span>
           </li>
           <li>
             <strong>8</strong>
-            <span>langages utilisés</span>
+            <span>{t("hero.languagesCount")}</span>
           </li>
         </ul>
 

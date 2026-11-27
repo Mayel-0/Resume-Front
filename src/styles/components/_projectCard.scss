@@ -15,7 +15,7 @@
     aspect-ratio: 16 / 9;
     overflow: hidden;
     position: relative;
-    background: linear-gradient(135deg, var(--accent-soft), rgba(255, 255, 255, 0.02));
+    background: linear-gradient(135deg, var(--accent-soft), rgba(var(--veil), 0.02));
     border-bottom: 1px solid var(--border);
 
     // Voile dégradé qui se révèle au survol
@@ -79,7 +79,7 @@
 
 .project-card:hover {
   background: var(--bg-2);
-  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 24px 50px rgba(var(--shadow-ink), 0.4);
 
   .project-card__media {
     &::after {

@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="fr" class="no-js" data-fond="ardoise">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prototype motion v5 · « Le tracé », hero « Les quatre fils » · mael-llado.com</title>
+<!--
+  Prototype Léa, MAEL-211 v3 + MAEL-216 (projets en hélice). Statique, hors du vrai site, jamais copié tel quel.
+  Depuis Resume-Front : python3 -m http.server 8765, puis http://localhost:8765/design/accueil-motion.html
+  ?fond=clair pour le fond clair · ?reduced=1 pour simuler prefers-reduced-motion.
+  GSAP + ScrollTrigger + Lenis via jsDelivr (connexion requise).
+-->
+<script>
+  document.documentElement.classList.replace("no-js", "js");
+  history.scrollRestoration = "manual";
+  // Thème : suit le réglage clair/sombre de l'ordinateur ; ?fond=clair ou ?fond=ardoise le force
+  const fond = new URLSearchParams(location.search).get("fond");
+  if (fond === "clair" || (!fond && matchMedia("(prefers-color-scheme: light)").matches)) document.documentElement.dataset.fond = "clair";
+</script>
+<style>
+@font-face { font-family: "Clash Display"; src: url("../src/assets/fonts/ClashDisplay-Variable.woff2") format("woff2"); font-weight: 200 700; font-display: swap; }
+@font-face { font-family: "Supreme"; src: url("../src/assets/fonts/Supreme-Variable.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+/* ---------------------------------------------------------------------
+   Palette (rôle de chaque couleur dans accueil-motion.md)
+   Fond neutre « ardoise » par défaut, variante « clair » en option.
+   Quatre couleurs de tracé, une par chapitre du site.
+   --------------------------------------------------------------------- */
+:root {
+  --bg: #1c1e22;        /* ardoise : gris neutre, ni noir ni bleuté */
+  --card: #25282d;      /* surfaces posées sur le fond */
+  --ink: #edebe7;       /* texte principal */
+  --ink-2: #b3b6bc;     /* texte secondaire (AA sur --bg et --card) */
+  --hair: rgba(255,255,255,.09);
+  --lagon: #33c4f2;     /* accueil, à propos, liens */
+  --menthe: #44d6a0;    /* parcours */
+  --mandarine: #ff8b42; /* projets */
+  --soleil: #ffd04d;    /* contact */
+  --shadow-a: .62; --shadow-b: .34;
+  --name: #2e3137;      /* nom géant derrière le portrait (hero v5) */
+}
+[data-fond="clair"] {
+  --bg: #e7e6e2; --card: #f7f6f3; --ink: #17191c; --ink-2: #4b5058; --hair: rgba(0,0,0,.09);
+  --lagon: #0b93c6; --menthe: #0e9a6c; --mandarine: #e2621a; --soleil: #d39e00;
+  --shadow-a: .52; --shadow-b: .28;
+  --name: #d6d5d0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); color: var(--ink); font: 400 1.0625rem/1.55 "Supreme", system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; transition: background .4s; }
+h1, h2, h3 { font-family: "Clash Display", sans-serif; font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+a:focus-visible { outline: 2px solid var(--lagon); outline-offset: 3px; }
+
+/* Ombres colorées : chaque surface prend la teinte de son chapitre */
+.tone-lagon { --tone: var(--lagon); }
+.tone-menthe { --tone: var(--menthe); }
+.tone-mandarine { --tone: var(--mandarine); }
+.tone-soleil { --tone: var(--soleil); }
+.lift { background: var(--card);
+  /* Ombre très floue : grand rayon, peu d'opacité, pour qu'aucun bord ne se devine */
+  box-shadow: 0 50px 160px -40px color-mix(in srgb, var(--tone) calc(var(--shadow-a) * 100%), transparent),
+              0 18px 60px -22px color-mix(in srgb, var(--tone) calc(var(--shadow-b) * 100%), transparent),
+              0 0 0 1px color-mix(in srgb, var(--tone) 18%, transparent); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 1.4rem; border-radius: 999px; font-weight: 600; white-space: nowrap;
+  border: 1.5px solid var(--ink); transition: background .25s, color .25s; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+.btn--full { background: var(--ink); color: var(--bg); }
+.btn--full:hover { background: transparent; color: var(--ink); }
+
+/* ---------------------------------------------------------------------
+   Contenu (mode page classique : sans JS ou mouvement réduit)
+   --------------------------------------------------------------------- */
+.header { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1rem clamp(1.25rem, 5vw, 4rem); background: var(--bg); }
+.header__logo { font: 600 1.05rem "Clash Display"; }
+.header__nav { display: flex; gap: 1.6rem; font-size: .95rem; color: var(--ink-2); }
+.header__nav a:hover { color: var(--ink); }
+.header__cta { display: none; min-height: 40px; padding: 0 1.1rem; font-size: .92rem; }
+
+.trace, .hud { display: none; }
+.world { display: grid; gap: clamp(4rem, 10vh, 7rem); width: min(1180px, 100% - 2.5rem); margin: 2rem auto 6rem; }
+.panel__in { position: relative; }
+
+/* ---------------------------------------------------------------------
+   Hero v5 « Les quatre fils » (MAEL-217, détail dans hero-handoff.md)
+   Trois plans : nom géant < quatre fils < portrait < textes
+   --------------------------------------------------------------------- */
+.hero { position: relative; min-height: calc(100svh - 4.5rem); overflow: hidden; isolation: isolate; container-type: inline-size;
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto 1fr auto; column-gap: 24px; --pad: 0px; padding: 1rem var(--pad) 2.5rem; }
+/* Page classique (sans JS ou mouvement réduit) : le hero sort du conteneur et prend toute la largeur */
+html:not(.is-world) .hero { width: 100vw; margin-inline: calc(50% - 50vw); --pad: clamp(1.25rem, 5vw, 4rem); }
+.hero__where { grid-column: 1 / 7; grid-row: 1; z-index: 4; max-width: 44ch; color: var(--ink-2); }
+.hero__where strong { color: var(--ink); font-weight: 600; }
+.hero__links { grid-column: 9 / 13; grid-row: 1; z-index: 4; justify-self: end; display: flex; gap: 1.4rem; list-style: none; color: var(--ink-2); }
+.hero__links a { display: inline-flex; min-height: 44px; align-items: center; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: var(--hair); }
+.hero__links a:hover { color: var(--ink); text-decoration-color: currentColor; }
+.hero__name { position: absolute; z-index: 1; inset: max(17svh, 10.5rem) var(--pad) auto; font-weight: 600; line-height: 1; pointer-events: none; }
+.hero__first { display: block; font-weight: 400; font-size: clamp(2.2rem, 6cqw, 5.6rem); color: var(--ink-2); margin-left: .06em; }
+.hero__last { display: flex; justify-content: space-between; font-size: min(27.4cqw, 44svh); line-height: .78; color: var(--name); margin-top: .02em; }
+.char { display: inline-block; }
+.fils { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.fils path { fill: none; stroke-linecap: round; transition: opacity .35s cubic-bezier(.22,1,.36,1), stroke-width .35s cubic-bezier(.22,1,.36,1); }
+.fils.is-focus path { opacity: .18; }
+.fils.is-focus path.is-on { opacity: 1; }
+.hero__portrait { position: absolute; z-index: 3; left: 50%; bottom: 0; height: min(76svh, 820px); aspect-ratio: 2096 / 2560; translate: -46% 0;
+  -webkit-mask: linear-gradient(to top, transparent 0, #000 22%); mask: linear-gradient(to top, transparent 0, #000 22%); }
+.hero__portrait img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+.hero__intro { grid-column: 1 / 6; grid-row: 3; z-index: 4; align-self: end; }
+.hero__statement { font: 500 clamp(1.55rem, 2.35vw, 2.3rem)/1.12 "Clash Display"; letter-spacing: -.015em; max-width: 17ch; }
+.hero__bio { margin-top: 1rem; max-width: 36ch; color: var(--ink-2); }
+.hero__actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.6rem; }
+.stack { grid-column: 9 / 13; grid-row: 3; justify-self: end; align-self: end; width: min(390px, 100%); z-index: 4; }
+.stack__title { font-size: .95rem; color: var(--ink-2); margin-bottom: .6rem; }
+.stack__list { list-style: none; display: grid; }
+.stack__row { --c: var(--lagon); position: relative; display: grid; grid-template-columns: 7.6rem 1fr; gap: .8rem; align-items: baseline;
+  padding: .7rem 1.5rem .7rem 1.5rem; border-top: 1px solid var(--hair); }
+.stack__row:last-child { border-bottom: 1px solid var(--hair); }
+.stack__row::before { content: ""; position: absolute; left: 0; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--c); }
+.stack__row::after { content: ""; position: absolute; right: 0; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--c); }   /* pastille de sortie : les fils repartent d'ici */
+.stack__row:focus-visible { outline: 2px solid var(--lagon); outline-offset: 3px; }
+.stack__layer { font: 600 1.15rem "Clash Display"; white-space: nowrap; }
+.stack__tools { color: var(--ink-2); font-size: .95rem; }
+.stack__row:hover .stack__tools, .stack__row:focus .stack__tools { color: var(--ink); }
+.stack__row--menthe { --c: var(--menthe); } .stack__row--mandarine { --c: var(--mandarine); } .stack__row--soleil { --c: var(--soleil); }
+
+.about { padding: clamp(1.6rem, 4vw, 3.2rem); border-radius: 28px; display: grid; grid-template-columns: 1.5fr 1fr; gap: 2.5rem; }
+.about h2 { grid-column: 1 / -1; font-size: clamp(2.2rem, 5vw, 4rem); }
+.about__text { font: 500 clamp(1.1rem, 1.9vw, 1.55rem)/1.45 "Clash Display"; }
+.facts { display: grid; gap: 1.1rem; align-content: start; }
+.facts dt { font-size: .88rem; color: var(--ink-2); }
+.facts dd { font-weight: 600; }
+
+.chapter { font-size: clamp(2.2rem, 5.5vw, 4.4rem); }
+.steps { list-style: none; display: grid; gap: 1rem; }
+.step { position: relative; padding: 1.2rem 1.3rem 1.1rem; border-radius: 14px; }
+.step__dot { position: absolute; top: -7px; left: 1.3rem; width: 14px; height: 14px; border-radius: 50%; background: var(--bg); border: 3px solid var(--menthe); }
+.step__when { color: var(--ink-2); font-size: .9rem; }
+.step h3 { font-size: 1.3rem; font-weight: 500; margin-top: .25rem; }
+.step p { color: var(--ink-2); font-size: .95rem; }
+
+/* Fiche projet : image à gauche, titre + année + description + technos + lien à droite */
+.card { display: grid; grid-template-columns: 1fr 1.05fr; border-radius: 8px; overflow: hidden; max-width: 820px; }
+.card__media { min-height: 300px; overflow: hidden; }
+.card__media img { width: 100%; height: 100%; object-fit: cover; }
+.card__body { display: flex; flex-direction: column; gap: .55rem; padding: 1.5rem 1.6rem; }
+.card__when { color: var(--ink-2); font-size: .92rem; }
+.card h3 { font-size: clamp(1.6rem, 2.6vw, 2.25rem); font-weight: 600; }
+.card__more { display: flex; flex-direction: column; gap: .7rem; flex: 1; margin-top: .3rem; }
+.card__intro { color: var(--ink-2); font-size: .98rem; max-width: 40ch; }
+.card__tags { color: var(--mandarine); font-weight: 600; font-size: .92rem; }
+.card__link { align-self: flex-start; margin-top: auto; padding-bottom: 2px; font-weight: 600; border-bottom: 1.5px solid var(--mandarine); }
+.card__link:hover { color: var(--mandarine); }
+
+.contact { text-align: center; padding: 2rem 0; }
+.contact h2 { font-size: clamp(2.2rem, 5.5vw, 4.4rem); max-width: 15ch; margin-inline: auto; }
+.contact p { color: var(--ink-2); max-width: 40ch; margin: 1.2rem auto 2rem; }
+.contact__cta { min-height: 58px; padding: 0 2.2rem; font-size: 1.1rem; }
+.contact__links { display: flex; justify-content: center; gap: 1.6rem; margin-top: 1.5rem; color: var(--ink-2); }
+.contact__links a { text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--hair); }
+.contact__links a:hover { color: var(--ink); text-decoration-color: currentColor; }
+
+.mk { position: fixed; right: 12px; bottom: 12px; z-index: 60; display: flex; gap: .35rem; align-items: center; padding: .3rem;
+  border-radius: 999px; background: var(--card); border: 1px solid var(--hair); font-size: .75rem; }
+.mk a { padding: .3rem .7rem; border-radius: 999px; border: 1px solid var(--hair); }
+
+@media (max-width: 899px) {
+  .header__nav { display: none; }
+  .header__cta { display: inline-flex; }
+  .about, .card { grid-template-columns: 1fr; }
+  .hero { display: flex; flex-direction: column; min-height: 0; padding-top: 0; }
+  .hero__links { display: none; }
+  .hero__where { font-size: .95rem; }
+  .hero__name { position: relative; inset: auto; margin-top: 1.2rem; }
+  .hero__first { font-size: clamp(2rem, 9cqw, 3.4rem); }
+  .hero__last { color: var(--ink); }
+  .hero__portrait { position: relative; left: auto; translate: none; align-self: center; height: auto; width: min(78vw, 360px); margin-top: -9vw; }
+  .hero__intro { position: relative; margin-top: -2rem; align-self: stretch; }
+  .hero__statement { font-size: clamp(1.45rem, 6.4vw, 1.9rem); }
+  .hero__bio { font-size: 1rem; }
+  .hero__actions .btn { flex: 1 1 100%; }
+  .stack { margin-top: 2.4rem; width: 100%; }
+  .stack__row { grid-template-columns: 6.6rem 1fr; padding-right: 0; }
+  .stack__row::after { display: none; }
+  .card__media { min-height: 0; aspect-ratio: 16/9; }
+  .mk { bottom: .7rem; right: .7rem; } .mk a { padding: .25rem .55rem; }
+}
+
+/* ---------------------------------------------------------------------
+   Mode « tracé » : la page devient une carte, le scroll déplace la caméra
+   le long d'une ligne en quatre couleurs.
+   --------------------------------------------------------------------- */
+.is-world body { min-height: 100%; }
+.is-world .header { position: fixed; inset: 0 0 auto; background: linear-gradient(var(--bg) 55%, transparent); }
+.is-world .stage { position: fixed; inset: 0; overflow: hidden; height: 100lvh; z-index: 0; }
+.is-world .trace, .is-world .helix { display: block; position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.is-world .helix { z-index: 2; }           /* brins de l'hélice côté caméra : entre les fiches de derrière et celles de devant */
+.helix { display: none; }
+.trace .is-back { opacity: .32; }          /* brins de l'hélice côté opposé */
+.trace path, .helix path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.is-world .world { display: block; width: auto; margin: 0; }
+.is-world .panel { position: absolute; left: 0; top: 0; z-index: 1; transform-origin: 50% 50%; will-change: transform; }
+.is-world .panel__in { opacity: 0; transform: translateY(28px); clip-path: inset(0 0 100% 0 round 14px);
+  transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .9s cubic-bezier(.22,1,.36,1), clip-path .9s cubic-bezier(.22,1,.36,1); }
+.is-world .panel.is-on .panel__in { opacity: 1; transform: none; clip-path: inset(-260px round 14px); }   /* marge large : le clip ne doit jamais couper l'ombre */
+.is-world .track { height: 1000vh; }
+.measuring .panel__in { transform: none !important; transition: none !important; }
+
+/* Tailles des panneaux sur la carte */
+.is-world .p-hero { width: 100vw; height: 100svh; }
+.is-world .p-hero .panel__in { width: 100%; height: 100%; opacity: 1; transform: none; clip-path: none; transition: none; }   /* l'intro du hero gère son apparition */
+/* Transport vers un lien : un panneau reste caché (is-hold) tant que les lignes ne sont pas revenues,
+   puis il est libéré un à un ; le hero, sans transition de base, se découvre en fondu */
+.is-world .panel.is-hold .panel__in { opacity: 0 !important; transition: none !important; }
+.is-world .p-hero.is-release .panel__in { transition: opacity .8s cubic-bezier(.22,1,.36,1); }
+.is-world .hero { --pad: clamp(1.25rem, 5vw, 4rem); height: 100%; min-height: 0; padding: 5.5rem var(--pad) 4.6rem; }   /* bas : place pour le HUD */
+.is-world .p-about { width: min(1000px, 74vw); }
+.is-world .p-title { width: min(620px, 60vw); }
+.is-world .p-title .panel__in { display: inline-block; background: var(--bg); padding: .15em .35em .2em; margin-left: -.35em; border-radius: 10px; }
+@media (min-width: 900px) { .is-world #projets { width: min(900px, 72vw); } }
+.is-world .p-step { width: clamp(230px, 22vw, 320px); }
+.is-world .p-card { width: min(780px, 62vw); backface-visibility: hidden; cursor: pointer; }
+.is-world .p-card .card__more { opacity: var(--focus, 1); }   /* description, technos et lien : seulement sur la fiche de face */
+.is-world .p-contact { width: min(820px, 80vw); }
+.is-world .about__text .w { opacity: .22; }
+
+.is-world .hud { display: flex; background: var(--bg); padding: .35rem .7rem; margin-left: -.7rem; border-radius: 999px; position: fixed; left: clamp(1.25rem, 5vw, 4rem); bottom: 1.2rem; z-index: 40; align-items: center; gap: .8rem;
+  font-size: .9rem; color: var(--ink-2); }
+.hud__bar { width: 110px; height: 3px; border-radius: 3px; background: var(--hair); overflow: hidden; }
+.hud__bar span { display: block; height: 100%; width: 100%; background: var(--tone, var(--lagon)); transform-origin: left; transform: scaleX(0); }
+
+@media (max-width: 899px) {
+  /* Mobile en mode tracé : tout tient dans un écran, le portrait prend la place qui reste */
+  .is-world .hero { padding: 4.4rem 1.25rem 3.4rem; }
+  .is-world .hero__where { font-size: .9rem; }
+  .is-world .hero__name { margin-top: .8rem; }
+  .is-world .hero__portrait { flex: 1 1 0; min-height: 0; width: auto; height: auto; max-width: 100%; margin-top: -7vw; }
+  .is-world .hero__portrait img { height: 100%; width: auto; max-width: 100%; }
+  .is-world .hero__intro { margin-top: -1.4rem; }
+  .is-world .hero__statement { font-size: clamp(1.3rem, 5.8vw, 1.7rem); }
+  .is-world .hero__bio { display: none; }                       /* repris dans À propos */
+  .is-world .hero__actions { flex-wrap: nowrap; margin-top: 1rem; }
+  .is-world .hero__actions .btn { flex: 1 1 0; min-height: 46px; padding: 0 .8rem; font-size: .92rem; }
+  .is-world .stack { margin-top: 1.1rem; }
+  .is-world .stack__title { font-size: .85rem; margin-bottom: .3rem; }
+  .is-world .stack__list { grid-template-columns: 1fr 1fr; column-gap: 1rem; }
+  .is-world .stack__row { display: block; padding: .45rem 0 .45rem 1.1rem; }
+  .is-world .stack__row:nth-last-child(2) { border-bottom: 1px solid var(--hair); }
+  .is-world .stack__row::before { width: 8px; height: 8px; margin-top: -4px; }
+  .is-world .stack__layer { font-size: .98rem; }
+  .is-world .stack__tools { display: none; }                    /* le détail reste sur desktop */
+  .is-world .p-about { width: calc(100vw - 2.5rem); }
+  .is-world .about { padding: 1.4rem; gap: 1.2rem; }
+  .is-world .about h2, .is-world .chapter, .is-world .contact h2 { font-size: clamp(2rem, 9vw, 2.6rem); }
+  .is-world .about__text { font-size: 1.08rem; }
+  .is-world .p-title, .is-world .p-step, .is-world .p-contact { width: calc(100vw - 2.5rem); }
+  .is-world .p-card { width: calc(100vw - 2.5rem); }
+  .is-world .card { grid-template-columns: 1fr; }
+  .is-world .card__media { min-height: 0; aspect-ratio: 16/9; }
+  .is-world .card__body { padding: 1.1rem 1.2rem 1.2rem; gap: .4rem; }
+  .is-world .card h3 { font-size: 1.6rem; }
+  .is-world .card__intro { font-size: .93rem; }
+  .is-world .hud { bottom: .9rem; }
+  .is-world .hud__bar { width: 60px; }
+}
+@media (max-width: 899px) and (max-height: 720px) {
+  .is-world .hero { padding-top: 4rem; padding-bottom: 3rem; }
+  .is-world .hero__where { display: none; }
+  .is-world .stack__title { display: none; }
+}
+
+/* Écran d'ordinateur peu haut (≤ 800 px) : le texte court passe dans À propos, la phrase rétrécit,
+   pour que les fils gardent la place de passer entre le nom et la phrase */
+@media (min-width: 900px) and (max-height: 800px) {
+  .hero__bio { display: none; }
+  .hero__statement { font-size: clamp(1.4rem, 2vw, 1.85rem); }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="header__logo" href="#accueil">Maël Llado</a>
+  <nav class="header__nav" aria-label="Sections">
+    <a href="#a-propos">À propos</a><a href="#parcours">Parcours</a><a href="#projets">Projets</a><a href="#contact">Contact</a>
+  </nav>
+  <a class="btn header__cta" href="#contact">M'écrire</a>
+</header>
+
+<div class="hud" aria-hidden="true"><span class="hud__label">Accueil</span><span class="hud__bar"><span></span></span></div>
+<div class="mk" aria-hidden="true"><a id="mk-fond" href="?fond=clair">Fond clair</a><a id="mk-motion" href="?reduced=1">Mouvement réduit</a></div>
+
+<div class="stage">
+  <svg class="trace" aria-hidden="true"></svg>
+  <svg class="helix" aria-hidden="true"></svg>
+  <main class="world">
+
+    <section class="panel p-hero" id="accueil" data-d="0.5,0.5" data-label="Accueil" data-tone="lagon">
+      <div class="panel__in hero">
+        <p class="hero__where">À Bordeaux, en 2ᵉ année à Ynov. <strong>Je cherche une alternance en développement web</strong> à partir de [À PRÉCISER].</p>
+        <ul class="hero__links" aria-label="Ailleurs">
+          <li><a href="https://github.com/Mayel-0" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          <li><a href="#" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+        </ul>
+        <h1 class="hero__name"><span class="hero__first">Maël</span><span class="hero__last">LLADO</span></h1>
+        <svg class="fils" aria-hidden="true"></svg>
+        <figure class="hero__portrait"><img src="../src/assets/images/portrait.png" alt="Portrait de Maël Llado" width="2096" height="2560"></figure>
+        <div class="hero__intro">
+          <p class="hero__statement">Je construis des applications web en entier, de l’écran jusqu’au serveur qui les fait tourner.</p>
+          <p class="hero__bio">J’ai commencé par les réseaux et la sécurité en bac pro SN, mention très bien. Depuis, je code pour le web, et je mets en ligne ce que je fais.</p>
+          <div class="hero__actions">
+            <a class="btn btn--full" href="#projets">Voir mes projets</a>
+            <a class="btn" href="#cv" download>Télécharger mon CV</a>
+          </div>
+        </div>
+        <div class="stack">
+          <p class="stack__title">Ce site, je l’ai fait de bout en bout :</p>
+          <ul class="stack__list">
+            <li class="stack__row" tabindex="0"><span class="stack__layer">L’interface</span> <span class="stack__tools">React, TypeScript, GSAP</span></li>
+            <li class="stack__row stack__row--menthe" tabindex="0"><span class="stack__layer">L’API</span> <span class="stack__tools">Node.js, Express, Zod</span></li>
+            <li class="stack__row stack__row--mandarine" tabindex="0"><span class="stack__layer">Les données</span> <span class="stack__tools">PostgreSQL, Drizzle</span></li>
+            <li class="stack__row stack__row--soleil" tabindex="0"><span class="stack__layer">Le serveur</span> <span class="stack__tools">Docker, Nginx, Oracle Cloud</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel p-about" id="a-propos" data-d="1.6,1.75" data-label="À propos" data-tone="lagon">
+      <div class="panel__in about tone-lagon lift">
+        <h2>Qui je suis</h2>
+        <p class="about__text">J’ai commencé par les réseaux et la cybersécurité en bac pro. Aujourd’hui je code surtout pour le web, du navigateur jusqu’au serveur. Ce site tourne sur une machine que j’administre : React pour l’interface, une API Express, PostgreSQL, le tout dans Docker derrière Nginx et Cloudflare. J’en modifie le contenu depuis un back-office que j’ai aussi développé.</p>
+        <dl class="facts">
+          <div><dt>Formation</dt><dd>Ynov Campus Bordeaux, 2ᵉ année</dd></div>
+          <div><dt>Diplôme</dt><dd>Bac pro SN option RISC, mention très bien</dd></div>
+          <div><dt>Je cherche</dt><dd>Une alternance en développement web, dès [À PRÉCISER]</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section id="parcours" class="panel p-title" data-d="0.42,2.55" data-label="Parcours" data-tone="menthe">
+      <div class="panel__in"><h2 class="chapter">Mon parcours</h2></div>
+    </section>
+    <div class="panel p-step" data-d="0.27,2.95" data-step data-label="Parcours" data-tone="menthe"><div class="panel__in step tone-menthe lift"><span class="step__dot"></span><span class="step__when">Lycée professionnel</span><h3>Cybersécurité et réseaux</h3><p>Mes premiers pas en informatique</p></div></div>
+    <div class="panel p-step" data-d="0.53,3.17" data-step data-label="Parcours" data-tone="menthe"><div class="panel__in step tone-menthe lift"><span class="step__dot"></span><span class="step__when">Stage</span><h3>Maintenance et boutique</h3><p>Support et matériel informatique</p></div></div>
+    <div class="panel p-step" data-d="0.79,2.95" data-step data-label="Parcours" data-tone="menthe"><div class="panel__in step tone-menthe lift"><span class="step__dot"></span><span class="step__when">Stage</span><h3>Snark Factory</h3><p>Développement web</p></div></div>
+    <div class="panel p-step" data-d="1.05,3.17" data-step data-label="Parcours" data-tone="menthe"><div class="panel__in step tone-menthe lift"><span class="step__dot"></span><span class="step__when">Aujourd’hui</span><h3>Ynov Campus, 2ᵉ année</h3><p>Étudiant en informatique</p></div></div>
+
+    <section id="projets" class="panel p-title" data-d="1.62,3.62" data-label="Projets" data-tone="mandarine">
+      <div class="panel__in"><h2 class="chapter">Ce que j’ai construit</h2></div>
+    </section>
+    <article class="panel p-card" data-card data-label="Projets" data-tone="mandarine"><div class="panel__in card tone-mandarine lift">
+      <div class="card__media"><img src="../src/assets/images/Eldoria.webp" alt=""></div>
+      <div class="card__body"><p class="card__when">Ynov B1</p><h3>Projet_Red : Eldoria</h3>
+        <div class="card__more"><p class="card__intro">Ce projet a été créé dans le cadre de mes études à Ynov Campus lors de ma première année (B1). Il a été réalisé en une semaine en Golang.</p><p class="card__tags">Golang · CLI · Jeu</p><a class="card__link" href="#">Voir le projet sur GitHub</a></div></div>
+    </div></article>
+    <article class="panel p-card" data-card data-label="Projets" data-tone="mandarine"><div class="panel__in card tone-mandarine lift">
+      <div class="card__media"><img src="../src/assets/images/FaceRecognition.webp" alt=""></div>
+      <div class="card__body"><p class="card__when">Bac Pro SN</p><h3>Face Recognition</h3>
+        <div class="card__more"><p class="card__intro">J’ai eu 4 semaines pour coder un logiciel en Python pour la reconnaissance faciale sur photos, vidéos et webcam en direct.</p><p class="card__tags">Python · Vision · OpenCV</p><a class="card__link" href="#">Voir le projet sur GitHub</a></div></div>
+    </div></article>
+    <article class="panel p-card" data-card data-label="Projets" data-tone="mandarine"><div class="panel__in card tone-mandarine lift">
+      <div class="card__media"><img src="../src/assets/images/CTF.webp" alt=""></div>
+      <div class="card__body"><p class="card__when">2025</p><h3>CTF</h3>
+        <div class="card__more"><p class="card__intro">J’ai participé au CTF 2025 sur le site Root Me, organisé par cette même plateforme.</p><p class="card__tags">Cybersécurité · Root Me · Web</p><a class="card__link" href="#">Voir le projet sur GitHub</a></div></div>
+    </div></article>
+    <article class="panel p-card" data-card data-label="Projets" data-tone="mandarine"><div class="panel__in card tone-mandarine lift">
+      <div class="card__media"><img src="../src/assets/images/onepiecedle.png" alt=""></div>
+      <div class="card__body"><p class="card__when">Projet perso</p><h3>One Piece DLE</h3>
+        <div class="card__more"><p class="card__intro">Fan game basé sur l’univers de One Piece. Le but est de trouver un personnage précis parmi 250, comme un Geoguessr pour les personnages.</p><p class="card__tags">Vue.js · Jeu · Front-end</p><a class="card__link" href="#">Voir le site</a></div></div>
+    </div></article>
+    <article class="panel p-card" data-card data-label="Projets" data-tone="mandarine"><div class="panel__in card tone-mandarine lift">
+      <div class="card__media"><img src="../src/assets/images/cloudperso.png" alt=""></div>
+      <div class="card__body"><p class="card__when">Projet perso</p><h3>Cloud Perso</h3>
+        <div class="card__more"><p class="card__intro">Projet personnel full Golang web avec communication base de données, hébergé sur NAS/Raspberry Pi.</p><p class="card__tags">Golang · MySQL · Self-hosted</p><a class="card__link" href="#">Voir le projet sur GitHub</a></div></div>
+    </div></article>
+    <article class="panel p-card" data-card data-label="Projets" data-tone="mandarine"><div class="panel__in card tone-mandarine lift">
+      <div class="card__media"><img src="../src/assets/images/tecktalk.png" alt=""></div>
+      <div class="card__body"><p class="card__when">Ydays</p><h3>Tech Talk</h3>
+        <div class="card__more"><p class="card__intro">Plateforme de podcasts créés par des étudiants pour des étudiants sur la tech et l’impact de l’IA sur nos métiers.</p><p class="card__tags">Web · Podcast · En cours</p><a class="card__link" href="#">Voir le projet sur GitHub</a></div></div>
+    </div></article>
+
+    <section class="panel p-contact" id="contact" data-label="Contact" data-tone="soleil">
+      <div class="panel__in contact">
+        <h2>Vous recrutez un alternant en développement web ?</h2>
+        <p>Le plus simple est de m’écrire. Mon CV et mes profils sont juste en dessous.</p>
+        <a class="btn btn--full contact__cta" href="#">M’écrire</a>
+        <div class="contact__links"><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#">Télécharger le CV</a></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="track" aria-hidden="true"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
+<script>
+(() => {
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  const REDUCED = params.has("reduced") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = (s, el = document) => el.querySelector(s);
+  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+
+  // Liens de la barre de maquette (gardent l'autre réglage)
+  const withParam = (k, v) => { const p = new URLSearchParams(location.search); v === null ? p.delete(k) : p.set(k, v); return "?" + p.toString(); };
+  const clair = root.dataset.fond === "clair";
+  $("#mk-fond").textContent = clair ? "Fond ardoise" : "Fond clair";
+  $("#mk-fond").href = withParam("fond", clair ? "ardoise" : "clair");
+  $("#mk-motion").textContent = REDUCED ? "Avec mouvement" : "Mouvement réduit";
+  $("#mk-motion").href = withParam("reduced", REDUCED ? null : "1");
+
+  // Texte découpé (dans le site : contenu de l'API)
+  const last = $(".hero__last");
+  last.setAttribute("aria-label", last.textContent);
+  last.innerHTML = [...last.textContent].map((c) => `<span class="char" aria-hidden="true">${c}</span>`).join("");
+  const about = $(".about__text");
+  about.innerHTML = about.textContent.split(" ").map((w) => `<span class="w">${w}</span>`).join(" ");
+
+  /* Hero v5 : les quatre fils. Ils entrent par la gauche à hauteur du nom, ondulent derrière le portrait,
+     puis chacun rejoint la pastille de sa couche dans « Ce site, je l'ai fait de bout en bout ».
+     Calculés dans le repère du hero : justes même quand la caméra le déplace ou le met à l'échelle. */
+  const fils = (() => {
+    const NS = "http://www.w3.org/2000/svg";
+    const hero = $(".hero"), svgF = $(".fils"), rows = $$(".stack__row");
+    const COLORS = ["--lagon", "--menthe", "--mandarine", "--soleil"], WIDTHS = [3, 2, 2, 1.5];
+    let paths = [], outs = [];
+    const pathFor = (i, box, name, end, lim) => {
+      const amp = 28 + i * 9, off = i * 14;
+      // les creux des vagues restent au-dessus de la phrase principale
+      const y0 = Math.min(name.top + name.height * (0.3 + i * 0.14), lim - (amp + off) * .8);
+      if (innerWidth < 900) {
+        // Mobile : sous le nom, derrière le portrait, sortie à droite ; jamais sur les textes
+        const top = name.bottom + 14 + i * 12, mid = top + 70 + i * 10;
+        return `M -20 ${top} C ${box.width * .3} ${top - amp}, ${box.width * .6} ${mid + amp}, ${box.width + 20} ${mid}`;
+      }
+      const P = (fx, y) => `${box.width * fx} ${y}`;
+      return `M -20 ${y0} C ${P(.16, y0 - amp)}, ${P(.28, y0 + amp + off)}, ${P(.42, y0 + off)}`
+        + ` S ${P(.6, y0 + 120 - amp)}, ${P(.66, (y0 + end.y) / 2 + off)} S ${end.x - 70} ${end.y}, ${end.x} ${end.y}`;
+    };
+    const trace = () => {
+      const H = hero.getBoundingClientRect(), k = hero.offsetWidth / H.width || 1;
+      const rel = (r) => ({ left: (r.left - H.left) * k, right: (r.right - H.left) * k, top: (r.top - H.top) * k, height: r.height * k, bottom: (r.bottom - H.top) * k });
+      const box = { width: hero.offsetWidth, height: hero.offsetHeight };
+      const name = rel($(".hero__last").getBoundingClientRect());
+      const lim = rel($(".hero__intro").getBoundingClientRect()).top - 24;
+      svgF.setAttribute("viewBox", `0 0 ${box.width} ${box.height}`);
+      svgF.replaceChildren();
+      paths = rows.map((row, i) => {
+        const r = rel(row.getBoundingClientRect());
+        const el = document.createElementNS(NS, "path");
+        el.setAttribute("d", pathFor(i, box, name, { x: r.left + 5, y: r.top + r.height / 2 }, lim));
+        el.style.stroke = `var(${COLORS[i]})`;
+        el.style.strokeWidth = WIDTHS[i];
+        svgF.append(el);
+        return el;
+      });
+      // Desktop : de l'autre côté des textes, chaque fil repart de sa pastille de droite et se rejoint
+      // au point d'où part la ligne de la carte (même point que `foot` dans build())
+      outs = [];
+      if (innerWidth >= 900) {
+        const st = rel($(".stack").getBoundingClientRect()), x0 = box.width - 14, y0 = st.bottom + 16;
+        outs = rows.map((row, i) => {
+          const r = rel(row.getBoundingClientRect()), xr = r.right - 5, yr = r.top + r.height / 2;
+          const el = document.createElementNS(NS, "path");
+          el.setAttribute("d", `M ${xr} ${yr} C ${xr + 34 + i * 6} ${yr}, ${x0 - 16 + i * 2} ${y0 - 80 + i * 16}, ${x0} ${y0}`);
+          el.style.stroke = `var(${COLORS[i]})`;
+          el.style.strokeWidth = WIDTHS[i];
+          svgF.append(el);
+          return el;
+        });
+      }
+    };
+    // Survol ou focus d'une couche : son fil s'épaissit, les autres s'effacent
+    rows.forEach((row, i) => {
+      const on = () => { svgF.classList.add("is-focus"); [paths[i], outs[i]].forEach((el) => { if (!el) return; el.classList.add("is-on"); el.style.strokeWidth = WIDTHS[i] + 2; }); };
+      const off = () => { svgF.classList.remove("is-focus"); [...paths, ...outs].forEach((el, j) => { el.classList.remove("is-on"); el.style.strokeWidth = WIDTHS[j % 4]; }); };
+      row.addEventListener("pointerenter", on); row.addEventListener("pointerleave", off);
+      row.addEventListener("focus", on); row.addEventListener("blur", off);
+    });
+    let timer;
+    addEventListener("resize", () => { clearTimeout(timer); timer = setTimeout(trace, 300); });
+    return { trace, rows, paths: () => paths, outs: () => outs };
+  })();
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(fils.trace);   // la forme des fils dépend de la taille du nom
+
+  if (REDUCED) return; // page classique : tout est visible, rien ne bouge
+
+  root.classList.add("is-world");
+  gsap.registerPlugin(ScrollTrigger);
+  ScrollTrigger.config({ ignoreMobileResize: true });
+  const lenis = new Lenis({ duration: 1.15 });
+  lenis.on("scroll", ScrollTrigger.update);
+  gsap.ticker.add((t) => lenis.raf(t * 1000));
+  gsap.ticker.lagSmoothing(0);
+
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = $(".trace");
+  const panels = $$(".panel");
+  const track = $(".track");
+  const hud = { label: $(".hud__label"), bar: $(".hud__bar span") };
+  const STRANDS = [                      // ordre de dessin : la ligne lagon passe devant
+    { color: "--soleil",    width: 1.5, amp: 30, wave: 760,  phase: 0.0 },
+    { color: "--menthe",    width: 2,   amp: 22, wave: 1150, phase: 2.1 },
+    { color: "--mandarine", width: 2,   amp: 38, wave: 940,  phase: 4.0 },
+    { color: "--lagon",     width: 3,   amp: 0,  wave: 1,    phase: 0 },
+  ];
+
+  // Courbe lisse passant par tous les points (Catmull-Rom → Bézier)
+  const smooth = (pts) => {
+    let d = `M ${pts[0][0]} ${pts[0][1]}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+      const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+      const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+      d += ` C ${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${p2[0]} ${p2[1]}`;
+    }
+    return d;
+  };
+  // Boucle autour du bouton de contact, entrée par la droite
+  const pill = (x, y, w, h) => {
+    const r = h / 2, cy = y + r;
+    return ` L ${x + w} ${cy} A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} H ${x + r} A ${r} ${r} 0 0 1 ${x + r} ${y} H ${x + w - r} A ${r} ${r} 0 0 1 ${x + w} ${cy}`;
+  };
+
+  // Brins autour de l'hélice des projets : écart au rayon, à l'angle, et fréquence de la tresse
+  // (même ordre que STRANDS ; le brin lagon est l'axe sur lequel les fiches sont posées)
+  const HELIX_STRANDS = [
+    { dr: .17,  dth: .30,  k: 2.2, ph: 0 },
+    { dr: -.13, dth: -.22, k: 1.6, ph: 2.1 },
+    { dr: .27,  dth: .14,  k: 2.8, ph: 4.0 },
+    { dr: 0,    dth: 0,    k: 0,   ph: 0 },
+  ];
+  const HELIX_RAMP = .08;    // part de l'hélice qui sert à entrer et à sortir (le rayon y passe de 0 à R)
+  const TILT = .2;           // la caméra regarde l'hélice un peu d'en haut : le cercle devient une ellipse
+  const MOVE = 1.15;         // durée d'un trajet entre deux chapitres (en écrans de défilement)
+  const TURN = .8;           // durée de la rotation d'un projet au suivant
+  const PROJECT_HOLD = .5;   // pause sur chaque projet
+  const clamp01 = (v) => Math.max(0, Math.min(1, v));
+  const helixSvg = $(".helix");
+
+  let st, tl, ctx;
+  const cam = { x: 0, y: 0, s: 1 };
+  const prog = { p: 0 };        // avancée du tracé avant l'hélice
+  const post = { p: 0 };        // avancée du tracé après l'hélice
+  const hx = { u: 0, phi: 0 };  // jusqu'où l'hélice est dessinée, et angle de la caméra autour d'elle
+  const intro = { k: 0 };
+
+  // Échantillonne un tracé SVG et dessine les quatre brins (le principal + trois qui ondulent autour)
+  const drawStrands = (d, mobile, envOf) => {
+    const probe = document.createElementNS(NS, "path");
+    probe.setAttribute("d", d); svg.append(probe);
+    const total = probe.getTotalLength();
+    const N = mobile ? 600 : 900;
+    const S = Array.from({ length: N + 1 }, (_, i) => { const p = probe.getPointAtLength(total * i / N); return [p.x, p.y]; });
+    probe.remove();
+    const fracOf = ([x, y]) => { let b = 0, bd = Infinity; S.forEach((s, i) => { const q = (s[0] - x) ** 2 + (s[1] - y) ** 2; if (q < bd) { bd = q; b = i; } }); return b / N; };
+    const env = envOf(fracOf);
+    const strands = STRANDS.map((cfg) => {
+      let path = d;
+      if (cfg.amp) {
+        const amp = cfg.amp * (mobile ? .6 : 1);
+        path = S.map((s, i) => {
+          const a = S[Math.max(0, i - 1)], b = S[Math.min(N, i + 1)];
+          const dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
+          const t = i / N, off = amp * env(t) * Math.sin((t * total) / cfg.wave * Math.PI * 2 + cfg.phase);
+          return `${i ? "L" : "M"} ${(s[0] - dy / len * off).toFixed(1)} ${(s[1] + dx / len * off).toFixed(1)}`;
+        }).join(" ");
+      }
+      const el = document.createElementNS(NS, "path");
+      el.setAttribute("d", path);
+      el.style.stroke = `var(${cfg.color})`;
+      el.style.strokeWidth = (mobile ? .8 : 1) * cfg.width;
+      svg.append(el);
+      return { el, L: el.getTotalLength() };
+    });
+    return { S, fracOf, strands };
+  };
+
+  const build = () => {
+    const W = innerWidth, H = innerHeight, mobile = W < 900;
+    const cards = $$("[data-card]"), n = cards.length;
+    const others = panels.filter((el) => el.dataset.card === undefined);
+    const contact = $("#contact"), projTitle = $("#projets"), aboutPanel = $("#a-propos");
+
+    // 1. Mesure des panneaux à plat
+    root.classList.add("measuring");
+    panels.forEach((el) => { el.style.transform = "none"; });
+    const geo = new Map();
+    panels.forEach((el) => geo.set(el, { w: el.offsetWidth, h: el.offsetHeight }));
+
+    // 2. Placement sur la carte (sauf les projets, posés sur l'hélice, et le contact, posé après)
+    if (mobile) {
+      let y = H, prevGroup = "hero";
+      others.forEach((el, i) => {
+        const g = geo.get(el);
+        if (i === 0) { g.x = W / 2; g.y = H / 2; return; }
+        if (el === contact) return;
+        const group = el.dataset.step !== undefined ? "step" : el.id || "x";
+        const gap = group === "step" && prevGroup === "step" ? H * .07 : H * .3;
+        g.x = W / 2; g.y = y + gap + g.h / 2; y = g.y + g.h / 2; prevGroup = group;
+      });
+    } else {
+      others.forEach((el) => { if (el === contact) return; const [u, v] = el.dataset.d.split(",").map(Number); const g = geo.get(el); g.x = u * W; g.y = v * H; });
+    }
+
+    // 3. L'hélice : la ligne s'enroule autour d'un axe vertical qui ondule, avec un rayon qui respire
+    const tg = geo.get(projTitle);
+    const cx = mobile ? W / 2 : W * 1.76;
+    if (!mobile) tg.x = cx - geo.get(cards[0]).w / 2 + tg.w / 2;   // titre aligné sur le bord gauche des fiches
+    const R = mobile ? W * .3 : Math.min(W * .24, 360);
+    const hy = mobile ? H * .66 : H * .46;                 // descente entre deux projets
+    const A = mobile ? W * .04 : W * .05;                  // ondulation de l'axe
+    const Fd = R * 4.2;                                    // distance de la caméra (perspective)
+    const STEP = Math.PI * 2 / Math.max(n, 3);             // un projet tous les 60° pour 6 projets
+    const span = (n - 1) * hy / (1 - 2 * HELIX_RAMP);
+    const yTop = tg.y + tg.h / 2 + H * .04, yBottom = yTop + span;
+    const uOf = (i) => HELIX_RAMP + (n > 1 ? i / (n - 1) : .5) * (1 - 2 * HELIX_RAMP);
+    const ramp = (u) => (1 - Math.cos(Math.PI * clamp01(Math.min(u, 1 - u) / HELIX_RAMP))) / 2;
+    // Entre deux projets, la ligne fait un tour complet de plus que la caméra : on voit les boucles,
+    // et la fiche suivante arrive quand même de face après une rotation de STEP seulement.
+    const theta = (u) => Math.PI / 2 + (u - HELIX_RAMP) / (1 - 2 * HELIX_RAMP) * (n - 1) * (STEP + Math.PI * 2);
+    const point3 = (u, j) => {
+      const h = HELIX_STRANDS[j], e = ramp(u), w = Math.sin(Math.PI * 2 * h.k * u + h.ph);
+      const r = R * e * (1 + .14 * Math.sin(Math.PI * 3 * u)) * (1 + h.dr * e * w);
+      const th = theta(u) + h.dth * e * w;
+      return [A * Math.sin(Math.PI * 2 * u) + r * Math.cos(th), yTop + u * span, r * Math.sin(th)];
+    };
+    // Rotation de la caméra autour de l'axe (angle phi), puis perspective et légère plongée
+    const project = ([dx, Y, Z], phi) => {
+      const c = Math.cos(phi), s = Math.sin(phi);
+      const x1 = dx * c + Z * s, z1 = Z * c - dx * s, k = (Fd - R) / (Fd - z1);
+      return { x: cx + x1 * k, y: Y + z1 * TILT, z: z1, k };
+    };
+    cards.forEach((el, i) => { const g = geo.get(el); g.i = i; g.u = uOf(i); g.th = theta(g.u); g.anchor = point3(g.u, 3); g.phi = i * STEP; });
+    const front = (i) => { const g = geo.get(cards[i]); const p = project(g.anchor, g.phi); return [p.x, p.y]; };
+
+    // Contact, sous l'hélice
+    const cg = geo.get(contact);
+    cg.x = mobile ? W / 2 : W * 1.0;
+    cg.y = yBottom + (mobile ? H * .3 : H * .62) + cg.h / 2;
+    const cr = $(".contact__cta").getBoundingClientRect(), pr = contact.getBoundingClientRect();
+    const ctaW = { x: cg.x - cg.w / 2 + (cr.left - pr.left), y: cg.y - cg.h / 2 + (cr.top - pr.top), w: cr.width, h: cr.height };
+    // Pied de la liste du hero, sous la pastille soleil : la ligne de la carte part de là
+    // (offsets : indépendants des transformations en cours ; le hero remplit le panneau à partir de 0,0)
+    const hg = geo.get(panels[0]), stackEl = $(".stack");
+    const footY = hg.y - hg.h / 2 + stackEl.offsetTop + stackEl.offsetHeight + 16;
+    // desktop : au point où se rejoignent les fils de sortie (bord droit du hero) ; mobile : sous la liste
+    const foot = mobile ? [hg.x - hg.w / 2 + stackEl.offsetLeft + 5, footY] : [hg.x + hg.w / 2 - 14, footY];
+    root.classList.remove("measuring");
+
+    // 4. Tracé avant l'hélice (accueil → entrée de l'hélice) et après (sortie → contact)
+    const steps = $$("[data-step]").map((el) => geo.get(el));
+    const dot = (g) => [g.x - g.w / 2 + 20.8 + 7, g.y - g.h / 2];   // centre de la pastille de l'étape
+    const entry = [cx, yTop], exit = [cx, yBottom];
+    let pre, key = {};
+    if (!mobile) {
+      const P = (u, v) => [u * W, v * H];
+      pre = [foot, [foot[0] + W * .012, foot[1] + H * .05], P(1.13, 1.22), P(1.18, 1.42), P(1.6, 1.3),
+             P(2.08, 1.5), P(2.1, 1.98), P(1.7, 2.2), P(1.15, 2.22), P(.72, 2.36), P(.08, 2.46), P(.06, 2.74),
+             ...steps.map(dot), P(1.3, 3.0), P(1.42, 3.36), P(2.05, 3.36), [cx + W * .03, yTop - H * .2], entry];
+      key = { hero: 1, aboutIn: 4, aboutOut: 8, step1: 12, step4: 15 };
+    } else {
+      pre = [foot, [W * .55, foot[1] + 4], [W * 1.05, H * 1.0]];
+      key.hero = 1;
+      const route = others.filter((el) => el !== contact).slice(1);
+      let side = -1;
+      route.forEach((el, i) => {
+        const g = geo.get(el);
+        if (el.dataset.step !== undefined) { pre.push(dot(g)); if (key.step1 === undefined) key.step1 = pre.length - 1; key.step4 = pre.length - 1; return; }
+        const next = route[i + 1] ? geo.get(route[i + 1]) : { y: yTop, h: 0 };
+        if (el === aboutPanel) key.aboutIn = pre.length;
+        pre.push([W / 2 + side * W * .42, (g.y + g.h / 2 + next.y - next.h / 2) / 2]);
+        if (el === aboutPanel) key.aboutOut = pre.length - 1;
+        side *= -1;
+      });
+      pre.push(entry);
+    }
+    const ctaRight = ctaW.x + ctaW.w, ctaMid = ctaW.y + ctaW.h / 2;
+    const postPts = mobile
+      ? [exit, [W * .92, (yBottom + cg.y - cg.h / 2) / 2], [ctaRight + W * .1, ctaW.y - H * .12], [ctaRight + W * .06, ctaMid]]
+      : [exit, [cx - W * .2, yBottom + H * .16], [ctaRight + W * .32, ctaW.y - H * .2], [ctaRight + W * .08, ctaMid]];
+
+    svg.innerHTML = ""; helixSvg.innerHTML = "";
+    // Les brins secondaires se resserrent aux deux bouts de chaque tracé (entrée de l'hélice, bouton de contact)
+    const A1 = drawStrands(smooth(pre), mobile, () => (t) => Math.min(1, t / .03) * clamp01((1 - t) / .03));
+    let bcFrac = 0;
+    const A2 = drawStrands(smooth(postPts) + pill(ctaW.x - 12, ctaW.y - 12, ctaW.w + 24, ctaW.h + 24), mobile,
+      (fracOf) => { bcFrac = fracOf(postPts[2]); return (t) => Math.min(1, t / .05) * clamp01((bcFrac - t) / .03); });
+    const F = Object.fromEntries(Object.entries(key).map(([k, i]) => [k, A1.fracOf(pre[i])]));
+
+    // Brins de l'hélice : un chemin « derrière » (sous les fiches) et un « devant » par brin, recalculés à chaque image
+    const HN = mobile ? 360 : 480;
+    const helixPaths = STRANDS.map((cfg) => {
+      const mk = (parent, back) => {
+        const el = document.createElementNS(NS, "path");
+        el.style.stroke = `var(${cfg.color})`;
+        el.style.strokeWidth = (mobile ? .8 : 1) * cfg.width;
+        if (back) el.classList.add("is-back");
+        parent.append(el); return el;
+      };
+      return { back: mk(svg, true), front: mk(helixSvg, false) };
+    });
+    const drawHelix = () => {
+      const last = Math.floor(hx.u * HN);
+      const us = Array.from({ length: last + 1 }, (_, i) => i / HN);
+      if (hx.u * HN > last) us.push(hx.u);
+      helixPaths.forEach(({ back, front: fr }, j) => {
+        const d = { back: "", front: "" };
+        let side = null, prev = null;
+        if (hx.u > 0) us.forEach((u) => {
+          const p = project(point3(u, j), hx.phi), s = p.z >= 0 ? "front" : "back";
+          if (s !== side) { const o = prev || p; d[s] += `M ${o.x.toFixed(1)} ${o.y.toFixed(1)} `; side = s; }
+          d[s] += `L ${p.x.toFixed(1)} ${p.y.toFixed(1)} `; prev = p;
+        });
+        back.setAttribute("d", d.back); fr.setAttribute("d", d.front);
+      });
+    };
+
+    // 5. Seuils d'apparition
+    others.forEach((el) => { const g = geo.get(el); g.on = el === panels[0] ? 0 : Math.max(0, A1.fracOf([g.x, g.y]) - .025); g.shown = null; });
+    geo.get(aboutPanel).on = Math.max(0, F.aboutIn - .02);
+    cg.post = true; cg.on = Math.max(0, bcFrac - .05);
+    cards.forEach((el) => { const g = geo.get(el); g.on = g.u - .05; g.shown = null; });
+
+    const flat = others.map((el) => ({ el, g: geo.get(el) }));
+    const ring = cards.map((el) => ({ el, g: geo.get(el) }));
+    let focused = 0;
+    const offscreen = (sx, sy, hw, hh) => sx + hw < -200 || sx - hw > W + 200 || sy + hh < -200 || sy - hh > H + 200;
+    const render = () => {
+      const p = prog.p * intro.k;
+      // non-scaling-stroke : les tirets se mesurent en pixels écran, donc à l'échelle de la caméra.
+      [[A1, p], [A2, post.p]].forEach(([A, q]) => A.strands.forEach(({ el, L }) => {
+        const Ls = L * cam.s;
+        el.style.strokeDasharray = `${Ls} ${Ls + 10}`;
+        el.style.strokeDashoffset = Ls * (1 - q);
+      }));
+      drawHelix();
+      const vb = `${cam.x - W / 2 / cam.s} ${cam.y - H / 2 / cam.s} ${W / cam.s} ${H / cam.s}`;
+      svg.setAttribute("viewBox", vb); helixSvg.setAttribute("viewBox", vb);
+      flat.forEach(({ el, g }) => {
+        const sx = (g.x - cam.x) * cam.s + W / 2, sy = (g.y - cam.y) * cam.s + H / 2;
+        el.style.visibility = offscreen(sx, sy, g.w * cam.s / 2, g.h * cam.s / 2) ? "hidden" : "visible";
+        el.style.transform = `translate3d(${(sx - g.w / 2).toFixed(1)}px, ${(sy - g.h / 2).toFixed(1)}px, 0) scale(${cam.s.toFixed(4)})`;
+        const on = (g.post ? post.p : p) >= g.on;
+        if (on !== g.shown) { g.shown = on; el.classList.toggle("is-on", on); }
+      });
+      // Fiches projets : posées sur l'hélice, tournées vers l'extérieur ; celle de face s'ouvre en entier
+      let best = -2;
+      ring.forEach(({ el, g }) => {
+        const q = project(g.anchor, hx.phi);
+        const ang = Math.PI / 2 - (g.th - hx.phi);           // angle de la fiche par rapport à la caméra
+        const facing = Math.cos(ang);
+        if (facing > best) { best = facing; focused = g.i; }
+        const sx = (q.x - cam.x) * cam.s + W / 2, sy = (q.y - cam.y) * cam.s + H / 2, sc = cam.s * q.k;
+        el.style.visibility = facing < .12 || offscreen(sx, sy, g.w * sc / 2, g.h * sc / 2) ? "hidden" : "visible";
+        el.style.transform = `translate3d(${(sx - g.w / 2).toFixed(1)}px, ${(sy - g.h / 2).toFixed(1)}px, 0) scale(${sc.toFixed(4)}) perspective(1600px) rotateY(${ang.toFixed(4)}rad)`;
+        el.style.zIndex = q.z >= 0 ? 3 : 1;
+        el.style.opacity = clamp01((facing - .12) / .45).toFixed(3);
+        el.style.setProperty("--focus", clamp01((facing - .84) / .14).toFixed(3));
+        const on = hx.u >= g.on;
+        if (on !== g.shown) { g.shown = on; el.classList.toggle("is-on", on); }
+      });
+    };
+
+    // 6. Les arrêts de caméra. Chaque arrêt fixe la caméra et l'état des tracés (pre, post, hélice).
+    const C = (el) => { const g = geo.get(el); return [g.x, g.y]; };
+    const group = (els) => {
+      const gs = els.map((e) => geo.get(e));
+      const x0 = Math.min(...gs.map((g) => g.x - g.w / 2)), x1 = Math.max(...gs.map((g) => g.x + g.w / 2));
+      const y0 = Math.min(...gs.map((g) => g.y - g.h / 2)), y1 = Math.max(...gs.map((g) => g.y + g.h / 2));
+      return { c: [(x0 + x1) / 2, (y0 + y1) / 2], s: Math.min(1, (W * .9) / (x1 - x0), (H * .8) / (y1 - y0)) };
+    };
+    const parc = group([$("#parcours"), ...$$("[data-step]")]);
+    const lastPhi = (n - 1) * STEP;
+    const helixPts = Array.from({ length: 81 }, (_, i) => { const q = project(point3(i / 80, 2), lastPhi); return [q.x, q.y]; });
+    const boxes = [...others.map((el) => geo.get(el)), ...cards.map((el) => { const g = geo.get(el), q = project(g.anchor, lastPhi); return { x: q.x, y: q.y, w: g.w * .6, h: g.h * .6 }; })];
+    const allPts = [...A1.S, ...A2.S, ...helixPts];
+    const xs = [...allPts.map((s) => s[0]), ...boxes.flatMap((g) => [g.x - g.w / 2, g.x + g.w / 2])];
+    const ys = [...allPts.map((s) => s[1]), ...boxes.flatMap((g) => [g.y - g.h / 2, g.y + g.h / 2])];
+    const map = { c: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2],
+                  s: Math.min((W * .9) / (Math.max(...xs) - Math.min(...xs)), (H * .86) / (Math.max(...ys) - Math.min(...ys))) };
+    const S0 = { pre: 0, post: 0, hu: 0, phi: 0 };
+    const STOPS = [
+      { id: "accueil",  c: C(panels[0]), s: 1, hold: .35, at: { ...S0, pre: F.hero } },
+      { id: "a-propos", c: C(aboutPanel), s: mobile ? Math.min(1, H * .84 / geo.get(aboutPanel).h) : 1, hold: 1.1,
+        at: { ...S0, pre: F.aboutIn }, end: { ...S0, pre: F.aboutOut } },
+      { id: "parcours", c: parc.c, s: parc.s, hold: 1.1, at: { ...S0, pre: F.step1 - .01 }, end: { ...S0, pre: F.step4 + .005 } },
+      ...cards.map((el, i) => ({ id: `projets-${i}`, c: i ? front(i) : [front(0)[0], front(0)[1] - H * .06], s: 1, hold: PROJECT_HOLD, turn: i > 0,
+        at: { ...S0, pre: 1, hu: Math.min(1, uOf(i) + .02), phi: i * STEP } })),
+      { id: "carte",    c: map.c, s: map.s, hold: .55, at: { pre: 1, post: bcFrac, hu: 1, phi: lastPhi } },
+      { id: "contact",  c: C(contact), s: 1, hold: .9, at: { pre: 1, post: 1, hu: 1, phi: lastPhi } },
+    ];
+
+    tl = gsap.timeline({ defaults: { ease: "none", immediateRender: false } });
+    Object.assign(cam, { x: STOPS[0].c[0], y: STOPS[0].c[1], s: 1 });
+    Object.assign(hx, { u: 0, phi: 0 }); prog.p = F.hero; post.p = 0;
+    const channels = (a, b, d, ease, t) => {
+      tl.fromTo(prog, { p: a.pre }, { p: b.pre, duration: d, ease }, t)
+        .fromTo(post, { p: a.post }, { p: b.post, duration: d, ease }, t)
+        .fromTo(hx, { u: a.hu, phi: a.phi }, { u: b.hu, phi: b.phi, duration: d, ease: ease === "none" ? "none" : "power2.inOut" }, t);
+    };
+    let t = 0;
+    STOPS.forEach((stop, i) => {
+      if (i > 0) {
+        const prev = STOPS[i - 1], from = prev.end || prev.at;
+        const d = stop.turn ? TURN : MOVE;
+        // Trajet : la caméra glisse ; entre deux projets elle tourne autour de l'hélice en descendant
+        tl.fromTo(cam, { x: prev.c[0], y: prev.c[1] }, { x: stop.c[0], y: stop.c[1], duration: d, ease: "power2.inOut" }, t);
+        if (stop.id === "carte" || prev.id === "carte") tl.fromTo(cam, { s: prev.s }, { s: stop.s, duration: d, ease: "power3.inOut" }, t);
+        else if (!stop.turn) {
+          const dip = Math.min(prev.s, stop.s) * (mobile ? .82 : .72);
+          tl.fromTo(cam, { s: prev.s }, { s: dip, duration: d / 2, ease: "sine.out" }, t).to(cam, { s: stop.s, duration: d / 2, ease: "sine.in" }, t + d / 2);
+        }
+        channels(from, stop.at, d, "power1.inOut", t);
+        t += d;
+      }
+      tl.addLabel(stop.id, t);
+      if (stop.end) channels(stop.at, stop.end, stop.hold, "none", t);
+      if (stop.id === "a-propos") tl.fromTo(".about__text .w", { opacity: .22 }, { opacity: 1, stagger: .025, duration: .25 }, t + .05);
+      t += stop.hold;
+    });
+    tl.set({}, {}, t);
+    tl.addLabel("projets", tl.labels["projets-0"]);
+
+    // Repères du HUD
+    const marks = STOPS.map((s) => ({ at: tl.labels[s.id], id: s.id }));
+    tl.eventCallback("onUpdate", () => {
+      render();
+      const now = tl.time();
+      let cur = marks[0];
+      marks.forEach((m) => { if (now >= m.at - MOVE / 2) cur = m; });
+      const isProj = cur.id.startsWith("projets");
+      const el = cur.id === "carte" || isProj ? projTitle : $("#" + cur.id);
+      hud.label.textContent = cur.id === "carte" ? "Vue d’ensemble"
+        : isProj ? `Projets · ${$("h3", cards[focused]).textContent}` : el.dataset.label;
+      hud.bar.parentElement.style.setProperty("--tone", `var(--${el.dataset.tone})`);
+      hud.bar.style.transform = `scaleX(${now / t})`;
+    });
+
+    track.style.height = `${t * H * (mobile ? .9 : 1) + H}px`;
+    st = ScrollTrigger.create({ trigger: track, start: "top top", end: "bottom bottom", scrub: .8, animation: tl });
+    render();
+    return { render, focused: () => focused };
+  };
+
+  // Clic sur une fiche de côté : la caméra tourne jusqu'à elle
+  $$("[data-card]").forEach((el, i) => el.addEventListener("click", (e) => {
+    if (!api || api.focused() === i) return;
+    e.preventDefault(); goTo(`projets-${i}`);
+  }));
+
+  // Liens internes : on voyage jusqu'au chapitre
+  const goTo = (id, immediate = false) => {
+    const at = Number.isFinite(+id) ? +id : tl && tl.labels[id];   // un nom d'arrêt, ou un temps (en écrans)
+    if (!st || at === undefined) return;
+    lenis.scrollTo(st.start + (at / tl.duration()) * (st.end - st.start), immediate ? { immediate: true } : { duration: 2 });
+  };
+  // Transport vers un lien du menu : fondu, saut de caméra, les lignes colorées reviennent d'abord,
+  // puis les éléments un à un (du plus central au plus éloigné)
+  let warping = false;
+  const WARP = { out: .35, lines: .55, gap: .1, stagger: .16 };   // fondu sortant · retour des lignes · pause · décalage entre éléments
+  const warpTo = (id) => {
+    const at = Number.isFinite(+id) ? +id : tl && tl.labels[id];
+    if (!st || at === undefined || warping) return;
+    if (Math.abs(st.progress - at / tl.duration()) < .004) return;   // déjà sur place
+    warping = true; lenis.stop();
+    const lines = $$(".trace, .helix"), world = $(".world"), panels = $$(".panel");
+    const release = (p) => { p.classList.add("is-release"); p.classList.remove("is-hold"); };
+    gsap.timeline({ onComplete: () => { panels.forEach((p) => p.classList.remove("is-release")); warping = false; lenis.start(); } })
+      .to([world, ...lines], { opacity: 0, duration: WARP.out, ease: "power2.in" })            // 1. tout s'efface
+      .add(() => {                                                                              // 2. la caméra saute, les panneaux sont retenus
+        panels.forEach((p) => p.classList.add("is-hold"));
+        lenis.start();   // Lenis ignore scrollTo tant qu'il est arrêté
+        lenis.scrollTo(st.start + (at / tl.duration()) * (st.end - st.start), { immediate: true, force: true });
+        lenis.stop();
+        ScrollTrigger.update(); st.getTween() && st.getTween().progress(1);
+        gsap.set(world, { opacity: 1 });
+      })
+      .to(lines, { opacity: 1, duration: WARP.lines, ease: "power2.out" })                    // 3. les lignes colorées d'abord
+      .add(() => {                                                                              // 4. puis les éléments, petit à petit
+        const cx = innerWidth / 2, cy = innerHeight / 2;
+        const seen = panels.filter((p) => p.style.visibility !== "hidden").map((p) => {
+          const r = p.getBoundingClientRect();
+          return { p, d: Math.hypot(r.left + r.width / 2 - cx, r.top + r.height / 2 - cy), on: r.right > 0 && r.left < innerWidth && r.bottom > 0 && r.top < innerHeight };
+        });
+        panels.filter((p) => !seen.some((s) => s.p === p)).forEach(release);
+        seen.filter((s) => !s.on).forEach((s) => release(s.p));
+        seen.filter((s) => s.on).sort((a, b) => a.d - b.d).forEach((s, i) => gsap.delayedCall(i * WARP.stagger, () => release(s.p)));
+      }, `+=${WARP.gap}`)
+      .set({}, {}, "+=1.1");   // laisse finir le dernier fondu avant de rendre la main
+  };
+  document.addEventListener("click", (e) => {
+    const a = e.target.closest('a[href^="#"]');
+    if (!a || a.getAttribute("href") === "#") return;
+    e.preventDefault(); (REDUCED ? goTo : warpTo)(a.getAttribute("href").slice(1));
+  });
+
+  let api;
+  const start = () => { ctx = gsap.context(() => { api = build(); }); ScrollTrigger.refresh(); };
+  let lastW = innerWidth, timer;
+  addEventListener("resize", () => {
+    if (innerWidth === lastW) return;
+    lastW = innerWidth; clearTimeout(timer);
+    timer = setTimeout(() => { const p = st ? st.progress : 0; ctx && ctx.revert(); start(); lenis.scrollTo(st.start + p * (st.end - st.start), { immediate: true }); }, 250);
+  });
+
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => requestAnimationFrame(() => {
+    lenis.scrollTo(0, { immediate: true });
+    start();
+    // ?vue=projets-2 (ou a-propos, parcours, carte, contact…) : ouvre directement sur un arrêt de caméra
+    const vue = params.get("vue");
+    if (vue) { intro.k = 1; lenis.resize(); goTo(vue, true); return; }
+    // Intro hero v5 (≈ 2,6 s) : nom, portrait, puis les quatre fils qui allument chaque couche ;
+    // la ligne de la carte part ensuite du pied de la liste vers la droite.
+    const t0 = gsap.timeline({ defaults: { ease: "power3.out" } });
+    t0.from(".hero__where", { opacity: 0, y: 16, duration: .6 }, 0)
+      .from(".hero__last .char", { yPercent: 105, opacity: 0, duration: 1, stagger: .06, ease: "expo.out" }, .1)
+      .from(".hero__first", { opacity: 0, duration: .7 }, .15)
+      .fromTo(".hero__portrait img", { clipPath: "inset(100% 0% 0% 0%)", y: 40 },
+        { clipPath: "inset(0% 0% 0% 0%)", y: 0, duration: 1.3, ease: "power4.inOut", clearProps: "clipPath,transform" }, .35)
+      .from(".header, .hud", { opacity: 0, duration: .6 }, 1.1)
+      .from(".hero__statement, .hero__bio, .hero__actions, .hero__links, .stack__title", { opacity: 0, y: 16, duration: .7, stagger: .08 }, 1.5)
+      .to(intro, { k: 1, duration: 1.3, ease: "power2.inOut", onUpdate: () => api && api.render() }, 2.5);
+    fils.outs().forEach((el, i) => {
+      const len = el.getTotalLength(), at = 1.85 + i * .14;
+      t0.fromTo(el, { strokeDasharray: len, strokeDashoffset: len },
+        { strokeDashoffset: 0, duration: .85, ease: "power2.inOut", clearProps: "strokeDasharray,strokeDashoffset" }, at);
+    });
+    fils.paths().forEach((el, i) => {
+      const len = el.getTotalLength(), at = .55 + i * .14;
+      t0.fromTo(el, { strokeDasharray: len, strokeDashoffset: len },
+          { strokeDashoffset: 0, duration: 1.5, ease: "power2.inOut", clearProps: "strokeDasharray,strokeDashoffset" }, at)
+        .from(fils.rows[i], { opacity: .2, duration: .4, ease: "none" }, at + 1.28);
+    });
+  }));
+})();
+</script>
+</body>
+</html>

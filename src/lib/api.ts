@@ -9,6 +9,13 @@ export const assetUrl = (path: string | null | undefined): string | undefined =>
 export const CV_URL = `${API_URL}/documents/Cv_Mael_llado.pdf`;
 export const CV_FILENAME = "CV_Mael_Llado.pdf";
 
+// Réponse HTTP en échec : garde le statut pour distinguer 404 et panne serveur
+export class ApiRequestError extends Error {
+  constructor(readonly status: number, readonly endpoint: string) {
+    super(`Erreur ${status} sur ${endpoint}`);
+  }
+}
+
 // Cache mémoire : une seule requête par endpoint, partagée entre les pages.
 const pending = new Map<ApiEndpoint, Promise<unknown>>();
 const resolved: Partial<ApiEndpoints> = {};
@@ -24,7 +31,7 @@ export function fetchApi<E extends ApiEndpoint>(endpoint: E): Promise<ApiEndpoin
 
   const request = fetch(`${API_URL}${endpoint}`)
     .then((res) => {
-      if (!res.ok) throw new Error(`Erreur ${res.status} sur ${endpoint}`);
+      if (!res.ok) throw new ApiRequestError(res.status, endpoint);
       // Le contrat avec le back est porté par les modèles : la réponse
       // n'est pas revalidée côté navigateur.
       return res.json() as Promise<ApiEndpoints[E]>;

@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="fr" data-fond="ardoise">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maquette hero v5 · « Les quatre fils » · mael-llado.com</title>
+<!--
+  Maquette Léa, MAEL-217. Statique, hors du vrai site, jamais copiée telle quelle.
+  Depuis Resume-Front : python3 -m http.server 8765, puis http://localhost:8765/design/hero.html
+  ?fond=clair · ?reduced=1 (mouvement réduit) · ?vue=mobile (aperçu 390 × 844 à côté)
+  Aucune dépendance : animation en Web Animations API, pour rester lisible par Paul.
+-->
+<script>
+  const q = new URLSearchParams(location.search);
+  const fond = q.get("fond");
+  if (fond === "clair" || (!fond && matchMedia("(prefers-color-scheme: light)").matches)) document.documentElement.dataset.fond = "clair";
+  if (q.get("reduced") === "1") document.documentElement.classList.add("reduced");
+  if (q.get("embed") === "1") document.documentElement.classList.add("embed");
+</script>
+<style>
+@font-face { font-family: "Clash Display"; src: url("../src/assets/fonts/ClashDisplay-Variable.woff2") format("woff2"); font-weight: 200 700; font-display: swap; }
+@font-face { font-family: "Supreme"; src: url("../src/assets/fonts/Supreme-Variable.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+/* Palette v4 inchangée (rôles dans accueil-motion.md) */
+:root {
+  --bg: #1c1e22; --card: #25282d; --ink: #edebe7; --ink-2: #b3b6bc; --hair: rgba(255,255,255,.09);
+  --lagon: #33c4f2; --menthe: #44d6a0; --mandarine: #ff8b42; --soleil: #ffd04d;
+  --name: #2e3137;     /* nom géant derrière le portrait : un cran au-dessus du fond */
+  --ease: cubic-bezier(.22, 1, .36, 1);
+}
+[data-fond="clair"] {
+  --bg: #e7e6e2; --card: #f7f6f3; --ink: #17191c; --ink-2: #4b5058; --hair: rgba(0,0,0,.09);
+  --lagon: #0b93c6; --menthe: #0e9a6c; --mandarine: #e2621a; --soleil: #d39e00;
+  --name: #d6d5d0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); color: var(--ink); font: 400 1.0625rem/1.55 "Supreme", system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+h1, h2 { font-family: "Clash Display", sans-serif; letter-spacing: -.02em; line-height: 1; }
+a { color: inherit; text-decoration: none; }
+a:focus-visible, button:focus-visible, li:focus-visible { outline: 2px solid var(--lagon); outline-offset: 3px; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 1.4rem; border-radius: 999px;
+  font-weight: 600; white-space: nowrap; border: 1.5px solid var(--ink); transition: background .25s, color .25s; }
+.btn:hover { background: var(--ink); color: var(--bg); }
+.btn--full { background: var(--ink); color: var(--bg); }
+.btn--full:hover { background: transparent; color: var(--ink); }
+
+.header { position: absolute; inset: 0 0 auto; z-index: 10; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem clamp(1.25rem, 4vw, 3.5rem); }
+.header__logo { font: 600 1.05rem "Clash Display"; }
+.header__nav { display: flex; gap: 1.6rem; font-size: .95rem; color: var(--ink-2); }
+.header__nav a:hover { color: var(--ink); }
+
+/* ---------------------------------------------------------------------
+   Hero : trois plans. Nom géant (fond) < quatre fils < portrait < textes
+   --------------------------------------------------------------------- */
+.hero { position: relative; min-height: 100svh; overflow: hidden; isolation: isolate;
+  display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: auto 1fr auto; column-gap: 24px;
+  padding: 5.5rem clamp(1.25rem, 4vw, 3.5rem) 2.5rem; }
+
+.hero__where { grid-column: 1 / 7; grid-row: 1; z-index: 4; max-width: 44ch; color: var(--ink-2); }
+.hero__where strong { color: var(--ink); font-weight: 600; }
+.hero__links { grid-column: 9 / 13; grid-row: 1; z-index: 4; justify-self: end; display: flex; gap: 1.4rem; list-style: none; color: var(--ink-2); }
+.hero__links a { display: inline-flex; min-height: 44px; align-items: center; text-decoration: underline; text-underline-offset: 5px; text-decoration-color: var(--hair); }
+.hero__links a:hover { color: var(--ink); text-decoration-color: currentColor; }
+
+/* Le nom occupe toute la largeur, posé derrière le portrait */
+.hero__name { position: absolute; z-index: 1; left: clamp(1.25rem, 4vw, 3.5rem); right: clamp(1.25rem, 4vw, 3.5rem); top: max(17svh, 10.5rem); font-weight: 600; pointer-events: none; }
+.hero__first { display: block; font-weight: 400; font-size: clamp(2.2rem, 5.4vw, 5.6rem); color: var(--ink-2); margin-left: .06em; }
+.hero__last { display: flex; justify-content: space-between; font-size: min(25.5vw, 44svh); line-height: .78; color: var(--name); margin-top: .02em; }
+.hero__last span { display: inline-block; }
+
+.fils { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.fils path { fill: none; stroke-linecap: round; transition: opacity .35s var(--ease), stroke-width .35s var(--ease); }
+.fils.is-focus path { opacity: .18; }
+.fils.is-focus path.is-on { opacity: 1; }
+
+.hero__portrait { position: absolute; z-index: 3; left: 50%; bottom: 0; height: min(76svh, 820px); aspect-ratio: 2096 / 2560; translate: -46% 0;
+  -webkit-mask: linear-gradient(to top, transparent 0, #000 22%); mask: linear-gradient(to top, transparent 0, #000 22%); }
+.hero__portrait img { width: 100%; height: 100%; object-fit: contain; object-position: bottom; display: block; }
+
+/* Bas de l'écran : à gauche qui je suis, à droite ce que je construis */
+.hero__intro { grid-column: 1 / 6; grid-row: 3; z-index: 4; align-self: end; }
+.hero__statement { font: 500 clamp(1.55rem, 2.35vw, 2.3rem)/1.12 "Clash Display"; letter-spacing: -.015em; max-width: 17ch; }
+.hero__bio { margin-top: 1rem; max-width: 36ch; color: var(--ink-2); }
+.hero__actions { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.6rem; }
+
+.stack { grid-column: 9 / 13; justify-self: end; width: min(390px, 100%); grid-row: 3; z-index: 4; align-self: end; }
+.stack__title { font-size: .95rem; color: var(--ink-2); margin-bottom: .6rem; }
+.stack__list { list-style: none; display: grid; }
+.stack__row { --c: var(--lagon); position: relative; display: grid; grid-template-columns: 7.6rem 1fr; gap: .8rem; align-items: baseline;
+  padding: .7rem 0 .7rem 1.5rem; border-top: 1px solid var(--hair); cursor: default; }
+.stack__row:last-child { border-bottom: 1px solid var(--hair); }
+.stack__row::before { content: ""; position: absolute; left: 0; top: 50%; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--c); }
+.stack__layer { font: 600 1.15rem "Clash Display"; white-space: nowrap; }
+.stack__tools { color: var(--ink-2); font-size: .95rem; }
+.stack__row:hover .stack__tools, .stack__row:focus-within .stack__tools, .stack__row:focus .stack__tools { color: var(--ink); }
+.stack__row--menthe { --c: var(--menthe); } .stack__row--mandarine { --c: var(--mandarine); } .stack__row--soleil { --c: var(--soleil); }
+
+/* Outils de maquette */
+.mk { position: fixed; right: 12px; bottom: 12px; z-index: 60; display: flex; gap: .35rem; padding: .3rem; border-radius: 999px;
+  background: var(--card); border: 1px solid var(--hair); font-size: .75rem; }
+.mk a, .mk button { padding: .3rem .7rem; border-radius: 999px; border: 1px solid var(--hair); background: none; color: inherit; font: inherit; cursor: pointer; }
+.embed .mk { display: none; }
+.phone { position: fixed; right: 16px; top: 16px; z-index: 70; width: 390px; height: 844px; max-height: calc(100vh - 80px); border: 0; border-radius: 28px;
+  box-shadow: 0 0 0 8px #000, 0 30px 80px rgba(0,0,0,.5); background: var(--bg); }
+
+/* ---------------------------------------------------------------------
+   Tablette et mobile : le nom au-dessus du portrait, les textes dessous,
+   la liste des quatre fils en dernier.
+   --------------------------------------------------------------------- */
+@media (max-width: 899px) {
+  .header__nav { display: none; }
+  .hero { display: flex; flex-direction: column; padding-top: 4.6rem; padding-bottom: 2rem; }
+  .hero__links { display: none; }
+  .hero__where { font-size: .95rem; }
+  .hero__name { position: relative; left: auto; right: auto; top: auto; margin-top: 1.2rem; }
+  .hero__first { font-size: clamp(2rem, 9vw, 3.4rem); }
+  .hero__last { font-size: 24.5vw; color: var(--ink); }
+  .hero__portrait { position: relative; left: auto; translate: none; align-self: center; height: auto; width: min(78vw, 360px); margin-top: -9vw; }
+  .hero__intro { margin-top: -2rem; position: relative; align-self: stretch; }
+  .hero__statement { font-size: clamp(1.45rem, 6.4vw, 1.9rem); }
+  .hero__bio { font-size: 1rem; }
+  .hero__actions .btn { flex: 1 1 100%; }
+  .stack { margin-top: 2.4rem; }
+  .stack__row { grid-template-columns: 6.2rem 1fr; }
+}
+
+/* Écran d'ordinateur peu haut (≤ 800 px) : le texte court passe dans À propos, la phrase rétrécit,
+   pour que les fils gardent la place de passer entre le nom et la phrase */
+@media (min-width: 900px) and (max-height: 800px) {
+  .hero__bio { display: none; }
+  .hero__statement { font-size: clamp(1.4rem, 2vw, 1.85rem); }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <a class="header__logo" href="#accueil">Maël Llado</a>
+  <nav class="header__nav" aria-label="Sections">
+    <a href="#a-propos">À propos</a><a href="#parcours">Parcours</a><a href="#projets">Projets</a><a href="#contact">Contact</a>
+  </nav>
+</header>
+
+<main>
+  <section class="hero" id="accueil" aria-labelledby="hero-nom">
+    <p class="hero__where">À Bordeaux, en 2ᵉ année à Ynov. <strong>Je cherche une alternance en développement web</strong> à partir de [À PRÉCISER].</p>
+    <ul class="hero__links" aria-label="Ailleurs">
+      <li><a href="https://github.com/Mayel-0" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      <li><a href="#" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+    </ul>
+
+    <h1 class="hero__name" id="hero-nom">
+      <span class="hero__first">Maël</span>
+      <span class="hero__last" aria-label="Llado"><span>L</span><span>L</span><span>A</span><span>D</span><span>O</span></span>
+    </h1>
+
+    <svg class="fils" aria-hidden="true"></svg>
+
+    <figure class="hero__portrait">
+      <img src="../src/assets/images/portrait.png" alt="Portrait de Maël Llado" width="2096" height="2560">
+    </figure>
+
+    <div class="hero__intro">
+      <p class="hero__statement">Je construis des applications web en entier, de l’écran jusqu’au serveur qui les fait tourner.</p>
+      <p class="hero__bio">J’ai commencé par les réseaux et la sécurité en bac pro SN, mention très bien. Depuis, je code pour le web, et je mets en ligne ce que je fais.</p>
+      <div class="hero__actions">
+        <a class="btn btn--full" href="#projets">Voir mes projets</a>
+        <a class="btn" href="#cv" download>Télécharger mon CV</a>
+      </div>
+    </div>
+
+    <div class="stack">
+      <p class="stack__title">Ce site, je l’ai fait de bout en bout :</p>
+      <ul class="stack__list">
+        <li class="stack__row" tabindex="0"><span class="stack__layer">L’interface</span><span class="stack__tools">React, TypeScript, GSAP</span></li>
+        <li class="stack__row stack__row--menthe" tabindex="0"><span class="stack__layer">L’API</span><span class="stack__tools">Node.js, Express, Zod</span></li>
+        <li class="stack__row stack__row--mandarine" tabindex="0"><span class="stack__layer">Les données</span><span class="stack__tools">PostgreSQL, Drizzle</span></li>
+        <li class="stack__row stack__row--soleil" tabindex="0"><span class="stack__layer">Le serveur</span><span class="stack__tools">Docker, Nginx, Oracle Cloud</span></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<div class="mk" aria-hidden="true">
+  <button id="mk-replay" type="button">Rejouer</button>
+  <a id="mk-fond" href="?fond=clair">Fond clair</a>
+  <a id="mk-motion" href="?reduced=1">Mouvement réduit</a>
+  <a id="mk-mobile" href="?vue=mobile">Vue mobile</a>
+</div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const reduced = root.classList.contains("reduced") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const hero = document.querySelector(".hero");
+  const svg = document.querySelector(".fils");
+  const rows = [...document.querySelectorAll(".stack__row")];
+  const NS = "http://www.w3.org/2000/svg";
+  const COLORS = ["--lagon", "--menthe", "--mandarine", "--soleil"];
+  const WIDTHS = [3, 2, 2, 1.5];            // mêmes épaisseurs que la ligne v4
+  const EASE = "cubic-bezier(.22, 1, .36, 1)";
+  const MOBILE_MAX = 899;
+
+  // Barre d'outils : chaque lien bascule un paramètre et garde les autres
+  const toggle = (id, key, val, label) => {
+    const p = new URLSearchParams(location.search);
+    const on = p.get(key) === val;
+    on ? p.delete(key) : p.set(key, val);
+    const a = document.getElementById(id);
+    a.href = "?" + p.toString();
+    if (on) a.textContent = label;
+    return on;
+  };
+  toggle("mk-fond", "fond", "clair", "Fond ardoise");
+  toggle("mk-motion", "reduced", "1", "Mouvement normal");
+  if (toggle("mk-mobile", "vue", "mobile", "Fermer la vue mobile")) {
+    const p = new URLSearchParams(location.search); p.delete("vue"); p.set("embed", "1");
+    const f = Object.assign(document.createElement("iframe"), { className: "phone", title: "Aperçu mobile", src: "?" + p.toString() });
+    document.body.append(f);
+  }
+
+  /* ---------------------------------------------------------------
+     Les quatre fils : ils entrent par la gauche à hauteur du nom,
+     ondulent derrière le portrait, puis chacun rejoint la pastille
+     de sa ligne dans « Ce site, je l'ai fait de bout en bout ».
+     Recalculés à chaque redimensionnement.
+     --------------------------------------------------------------- */
+  function pathFor(i, H, name, end) {
+    const amp = 28 + i * 9, off = i * 14;
+    // les creux des vagues restent au-dessus de la phrase principale
+    const lim = document.querySelector(".hero__intro").getBoundingClientRect().top - H.top - 24;
+    const y0 = Math.min(name.top - H.top + name.height * (0.3 + i * 0.14), lim - (amp + off) * .8);
+    if (H.width <= MOBILE_MAX) {
+      // Mobile : les fils traversent le nom et passent derrière le portrait, puis sortent à droite.
+      // Ils ne descendent jamais sur les textes ; la liste garde seulement ses pastilles.
+      const top = name.bottom - H.top + 14 + i * 12, mid = top + 70 + i * 10;
+      return `M -20 ${top} C ${H.width * .3} ${y0 - amp}, ${H.width * .6} ${mid + amp}, ${H.width + 20} ${mid}`;
+    }
+    const p = (fx, y) => `${H.width * fx} ${y}`;
+    return `M -20 ${y0}`
+      + ` C ${p(.16, y0 - amp)}, ${p(.28, y0 + amp + off)}, ${p(.42, y0 + off)}`
+      + ` S ${p(.6, y0 + 120 - amp)}, ${p(.66, (y0 + end.y) / 2 + off)}`
+      + ` S ${end.x - 70} ${end.y}, ${end.x} ${end.y}`;
+  }
+
+  function trace() {
+    const H = hero.getBoundingClientRect();
+    const name = document.querySelector(".hero__last").getBoundingClientRect();
+    svg.setAttribute("viewBox", `0 0 ${H.width} ${H.height}`);
+    svg.replaceChildren();
+    return rows.map((row, i) => {
+      const r = row.getBoundingClientRect();
+      const end = { x: r.left - H.left + 5, y: r.top - H.top + r.height / 2 };
+      const path = document.createElementNS(NS, "path");
+      path.setAttribute("d", pathFor(i, H, name, end));
+      path.style.stroke = `var(${COLORS[i]})`;
+      path.style.strokeWidth = WIDTHS[i];
+      svg.append(path);
+      return path;
+    });
+  }
+
+  let paths = trace();
+
+  // Survol ou focus d'une ligne de la liste : son fil s'épaissit, les autres s'effacent
+  rows.forEach((row, i) => {
+    const on = () => { svg.classList.add("is-focus"); paths[i].classList.add("is-on"); paths[i].style.strokeWidth = WIDTHS[i] + 2; };
+    const off = () => { svg.classList.remove("is-focus"); paths.forEach((p, j) => { p.classList.remove("is-on"); p.style.strokeWidth = WIDTHS[j]; }); };
+    row.addEventListener("pointerenter", on); row.addEventListener("pointerleave", off);
+    row.addEventListener("focus", on); row.addEventListener("blur", off);
+  });
+
+  let resizeTimer;
+  addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { paths = trace(); }, 120); });
+
+  /* ---------------------------------------------------------------
+     Intro (≈ 2,6 s), un seul moment orchestré :
+     0,00  la phrase du haut apparaît
+     0,10  LLADO monte lettre par lettre
+     0,35  le portrait se découvre de bas en haut
+     0,55  les quatre fils se tracent depuis la gauche (décalés de 0,14 s),
+           chaque ligne de la liste s'allume quand son fil l'atteint
+     1,50  la phrase principale, le texte, les boutons
+     --------------------------------------------------------------- */
+  function intro() {
+    if (reduced) return;
+    const A = (el, kf, o) => el.animate(kf, { fill: "backwards", easing: EASE, ...o });
+    const rise = [{ opacity: 0, transform: "translateY(16px)" }, { opacity: 1, transform: "none" }];
+    A(document.querySelector(".hero__where"), rise, { duration: 600 });
+    A(document.querySelector(".hero__first"), [{ opacity: 0 }, { opacity: 1 }], { duration: 700, delay: 150 });
+    document.querySelectorAll(".hero__last span").forEach((s, i) =>
+      A(s, [{ transform: "translateY(105%)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 1000, delay: 100 + i * 60, easing: "cubic-bezier(.16,1,.3,1)" }));
+    A(document.querySelector(".hero__portrait img"), [{ clipPath: "inset(100% 0 0 0)", transform: "translateY(40px)" }, { clipPath: "inset(0 0 0 0)", transform: "none" }],
+      { duration: 1300, delay: 350, easing: "cubic-bezier(.77,0,.18,1)" });
+    paths.forEach((p, i) => {
+      const len = p.getTotalLength();
+      const delay = 550 + i * 140, duration = 1500;
+      p.style.strokeDasharray = len;
+      A(p, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration, delay, easing: "cubic-bezier(.65,0,.35,1)" })
+        .finished.then(() => { p.style.strokeDasharray = ""; }).catch(() => {});
+      A(rows[i], [{ opacity: .2 }, { opacity: 1 }], { duration: 400, delay: delay + duration * .85 });
+    });
+    [".hero__statement", ".hero__bio", ".hero__actions", ".hero__links", ".stack__title"].forEach((s, i) =>
+      A(document.querySelector(s), rise, { duration: 700, delay: 1500 + i * 80 }));
+  }
+
+  document.getElementById("mk-replay").addEventListener("click", () => {
+    document.getAnimations().forEach(a => a.cancel());
+    paths = trace(); intro();
+  });
+
+  // Les fils dépendent de la taille du nom : on attend les polices
+  document.fonts.ready.then(() => { paths = trace(); intro(); });
+})();
+</script>
+</body>
+</html>

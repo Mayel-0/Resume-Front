@@ -118,7 +118,7 @@ Page (HomePage / ProjectD)
         └── <Contacts socials />
 ```
 
-Si l'API ne répond pas, une page d'erreur avec un bouton « Réessayer » remplace le contenu.
+Si l'API ne répond pas (ou qu'une route est absente, message distinct), une page d'erreur avec un bouton « Réessayer » remplace le contenu.
 
 ---
 
@@ -184,7 +184,11 @@ VITE_API_URL=https://mael-llado.com
 | -------------- | ------------------------------------------------------------- |
 | `VITE_API_URL` | URL de base du back, **sans** `/api` (le code l'ajoute)       |
 
-> Pour développer avec un back local : `VITE_API_URL=http://localhost:3000`.
+> Pour développer avec un back local, créer un `.env.local` (ignoré par git, prioritaire sur `.env`) :
+> `VITE_API_URL=http://localhost:3000`.
+> Le back doit être sur la branche qui porte les routes `/api/site-texts` et `/api/hero-layers`
+> (`feat/MAEL-224-textes` tant qu'elle n'est pas mergée), base migrée et seedée.
+> Sinon la page d'erreur indique que le contenu est introuvable (404).
 > La valeur est figée dans le bundle au moment du build.
 
 ---

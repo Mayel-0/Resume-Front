@@ -2,20 +2,24 @@ import { useRef } from "react";
 import { gsap, useGSAP, prefersReducedMotion } from "../lib/gsap";
 import Reveal from "./reveal";
 import SplitHeading from "./splitHeading";
+import WorldPanel from "./worldPanel";
+import { useWorldActive } from "../context/worldContext";
 import type { Section, TimelineItem } from "../models";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 interface ParcoursProps {
   timeline?: TimelineItem[];
-  sections?: Section[];
 }
 
-function Parcours({ timeline = [], sections = [] }: ParcoursProps) {
+function Parcours({ timeline = [] }: ParcoursProps) {
+  const { t } = useSiteTexts();
   const containerRef = useRef<HTMLOListElement>(null);
+  const world = useWorldActive();
 
   useGSAP(
     () => {
       const container = containerRef.current;
-      if (!container || !timeline.length) return;
+      if (!container || world || !timeline.length) return;
 
       if (prefersReducedMotion()) return;
 
@@ -79,14 +83,34 @@ function Parcours({ timeline = [], sections = [] }: ParcoursProps) {
         }
       });
     },
-    { scope: containerRef, dependencies: [timeline], revertOnUpdate: true }
+    { scope: containerRef, dependencies: [timeline, world], revertOnUpdate: true }
   );
+
+  if (world) {
+    return (
+      <>
+        <WorldPanel kind="title" d="0.42,2.55" label={t("parcours.panelLabel")} tone="menthe" anchor="parcours">
+          <h2 className="chapter" id="parcours">{t("parcours.title")}</h2>
+        </WorldPanel>
+        {timeline.map((item, i) => (
+          <WorldPanel key={item.id} kind="step" d="0.27,2.95" label={t("parcours.panelLabel")} tone="menthe" anchor="parcours" className={i % 2 ? "is-low" : ""}>
+            <div className="step card">
+              <span className="step__dot" aria-hidden="true" />
+              <span className="step__when">{item.period}</span>
+              <h3>{item.title}</h3>
+              {item.subtitle && <p>{item.subtitle}</p>}
+            </div>
+          </WorldPanel>
+        ))}
+      </>
+    );
+  }
 
   return (
     <section id="parcours" className="section shell">
       <Reveal className="section__head" y={24} stagger={0.12}>
         <span className="section__index">02</span>
-        <SplitHeading as="h2">Parcours et expériences</SplitHeading>
+        <SplitHeading as="h2">{t("parcours.title")}</SplitHeading>
       </Reveal>
 
       <ol className="timeline" ref={containerRef}>
@@ -105,20 +129,28 @@ function Parcours({ timeline = [], sections = [] }: ParcoursProps) {
         ))}
       </ol>
 
+    </section>
+  );
+}
+
+/** Blocs de texte libre sous le parcours, saisis dans l'admin. */
+export function ParcoursNarrative({ sections = [] }: { sections?: Section[] }) {
+  return (
+    <section className="section shell">
       <Reveal className="narrative" y={54} stagger={0.13} start="top 80%">
-        {sections.map((section) => (
-          <article
-            id={section.sectionId}
-            className="card narrative__card"
-            key={section.id}
-            data-tilt
-          >
-            <span className="section__index">{section.index}</span>
-            <h3>{section.title}</h3>
-            <div className="narrative__text" dangerouslySetInnerHTML={{ __html: section.html }} />
-          </article>
-        ))}
-      </Reveal>
+          {sections.map((section) => (
+            <article
+              id={section.sectionId}
+              className="card narrative__card"
+              key={section.id}
+              data-tilt
+            >
+              <span className="section__index">{section.index}</span>
+              <h3>{section.title}</h3>
+              <div className="narrative__text" dangerouslySetInnerHTML={{ __html: section.html }} />
+            </article>
+          ))}
+        </Reveal>
     </section>
   );
 }

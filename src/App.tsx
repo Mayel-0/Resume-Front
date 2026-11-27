@@ -6,6 +6,7 @@ import { Routes, Route } from "react-router-dom";
 import Header from "./components/header";
 import Footer from "./components/footer";
 import Cursor from "./components/cursor";
+import ThemeToggle from "./components/themeToggle";
 import useSmoothScroll from "./hooks/useSmoothScroll";
 import useMagnetic from "./hooks/useMagnetic";
 import useTilt from "./hooks/useTilt";
@@ -28,6 +29,7 @@ function App() {
         <Route path="*" element={<Notfound />} />
       </Routes>
       <Footer />
+      <ThemeToggle />
     </>
   );
 }

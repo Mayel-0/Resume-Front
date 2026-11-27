@@ -1,4 +1,6 @@
 import type Lenis from "lenis";
+import { getWorldTarget } from "./world/targets";
+import { isWarping, warpTo } from "./world/warp";
 
 // Instance Lenis partagée : créée par useSmoothScroll, lue par les
 // transitions de page et les liens d'ancre.
@@ -31,8 +33,21 @@ interface ScrollOptions {
  */
 export function scrollToTarget(target: number | string, { immediate = false }: ScrollOptions = {}): void {
   let destination: number | HTMLElement;
+  const worldTarget = typeof target === "string" ? getWorldTarget(decodeURIComponent(target.replace(/^#/, ""))) : undefined;
 
-  if (typeof target === "string") {
+  // Haut de page sur la carte (logo) : on repart de l'accueil
+  const heroTarget = target === 0 && !immediate ? getWorldTarget("hero") : undefined;
+
+  if (isWarping()) return; // transport en cours : un second clic est ignoré
+
+  if (worldTarget !== undefined || heroTarget !== undefined) {
+    // Arrêt de la carte : transport (fondu, saut de caméra, réapparition) ; direct à l'arrivée sur la page
+    destination = (worldTarget ?? heroTarget) as number;
+    if (!immediate) {
+      warpTo(destination);
+      return;
+    }
+  } else if (typeof target === "string") {
     const element = document.getElementById(decodeURIComponent(target.replace(/^#/, "")));
     if (!element) return;
     // Saut direct (arrivée sur une page) : les éléments n'ont pas encore

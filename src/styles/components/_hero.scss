@@ -98,6 +98,31 @@
     margin-inline: auto;
   }
 
+  // Une couleur par couche (interface, API, données, serveur)
+  &__layers {
+    list-style: none;
+    padding: 0;
+    margin: 1.4rem 0 0;
+    display: grid;
+    gap: 0.5rem;
+
+    li {
+      --layer: var(--lagon);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.2rem 0.8rem;
+      padding-left: 0.8rem;
+      border-left: 3px solid var(--layer);
+    }
+
+    li:nth-child(2) { --layer: var(--menthe); }
+    li:nth-child(3) { --layer: var(--mandarine); }
+    li:nth-child(4) { --layer: var(--soleil); }
+
+    strong { color: var(--text); font-weight: 600; }
+    span { color: var(--text-2); }
+  }
+
   &__role {
     margin-top: 1.2rem;
     font-size: clamp(1.05rem, 1.7vw, 1.25rem);

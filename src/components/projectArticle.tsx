@@ -1,5 +1,6 @@
 import { assetUrl } from "../lib/api";
 import type { Project, ProjectTag, ProjectTechStack } from "../models";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 interface ProjectArticleProps {
   project: Project;
@@ -8,6 +9,7 @@ interface ProjectArticleProps {
 }
 
 function ProjectArticle({ project, projectsTags = [], projectsStack = [] }: ProjectArticleProps) {
+  const { t } = useSiteTexts();
   const stack = projectsStack.filter((item) => item.projectId === project.id);
 
   return (
@@ -34,13 +36,13 @@ function ProjectArticle({ project, projectsTags = [], projectsStack = [] }: Proj
       </div>
       <div className="projectD-article__readme">
         <p>{project.readme}</p>
-        <span className="projectD-article__caption">Voici un extrait du README</span>
+        <span className="projectD-article__caption">{t("projectsPage.readmeCaption")}</span>
         {project.note && <p className="projectD-article__note">{project.note}</p>}
       </div>
 
       <div className="projectD-article__stack">
         <div>
-          <h3>Langage</h3>
+          <h3>{t("projectsPage.languages")}</h3>
           <div className="projectD-article__tag-list">
             {stack.filter((item) => item.type === "language").map((item) => (
               <span className="projectD-article__tag" key={item.id}>{item.label}</span>
@@ -48,7 +50,7 @@ function ProjectArticle({ project, projectsTags = [], projectsStack = [] }: Proj
           </div>
         </div>
         <div>
-          <h3>Frameworks & bibliothèques</h3>
+          <h3>{t("projectsPage.frameworks")}</h3>
           <div className="projectD-article__tag-list">
             {stack.filter((item) => item.type === "framework").map((item) => (
               <span className="projectD-article__tag" key={item.id}>{item.label}</span>

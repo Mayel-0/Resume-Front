@@ -16,7 +16,7 @@ function ProjectPage() {
   const projectsStack = useApi("/api/project-tech-stack");
   const requests = [projects, projectsTags, projectsStack];
   const loading = requests.some((request) => request.loading);
-  const hasError = requests.some((request) => request.error);
+  const failure = requests.find((request) => request.error)?.error;
 
   const [filtreActive, setFiltreActive] = useState<Filter>("All");
 
@@ -115,7 +115,7 @@ function ProjectPage() {
     { scope: filtersRef, dependencies: [filtreActive] }
   );
 
-  if (hasError) return <ApiError />;
+  if (failure) return <ApiError error={failure} />;
 
   return (
     <main>

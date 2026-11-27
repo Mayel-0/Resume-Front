@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchApi, getCached } from "../lib/api";
-import type { ApiEndpoint, ApiEndpoints } from "../models";
+import type { ApiEndpoints, ListEndpoint } from "../models";
 
 export interface ApiState<T> {
   data: T;
@@ -19,7 +19,7 @@ const toError = (error: unknown): Error =>
  * Retourne { data, loading, error } ; data vaut [] tant que rien n'est arrivé.
  * Le type de `data` est déduit de l'endpoint (voir models/ApiEndpoints).
  */
-export default function useApi<E extends ApiEndpoint>(endpoint: E): ApiState<ApiEndpoints[E]> {
+export default function useApi<E extends ListEndpoint>(endpoint: E): ApiState<ApiEndpoints[E]> {
   const [state, setState] = useState<ApiState<ApiEndpoints[E]>>(() => {
     const cached = getCached(endpoint);
     return cached

@@ -6,6 +6,7 @@ import Reveal from "./reveal";
 import SplitHeading from "./splitHeading";
 import TransitionLink from "./transitionLink";
 import type { Project, ProjectTag } from "../models";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 interface ProjetsProps {
   projects?: Project[];
@@ -23,6 +24,7 @@ const MEDIA = {
 const pad = (n: number): string => String(n).padStart(2, "0");
 
 function Projets({ projects = [], projectsTags = [] }: ProjetsProps) {
+  const { t } = useSiteTexts();
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const currentRef = useRef<HTMLSpanElement>(null);
@@ -128,11 +130,11 @@ function Projets({ projects = [], projectsTags = [] }: ProjetsProps) {
         <div>
           <Reveal className="section__head" y={24} stagger={0.12}>
             <span className="section__index">04</span>
-            <SplitHeading as="h2">Projets</SplitHeading>
+            <SplitHeading as="h2">{t("projects.title")}</SplitHeading>
           </Reveal>
           <Reveal y={30}>
             <p className="section__lead">
-              Une sélection de projets d'école et personnels, du jeu CLI en Go au cloud auto-hébergé.
+              {t("projects.lead")}
             </p>
           </Reveal>
         </div>
@@ -153,7 +155,7 @@ function Projets({ projects = [], projectsTags = [] }: ProjetsProps) {
 
         <div className="projects__more">
           <TransitionLink className="projects__all" to="/ProjectsD" data-magnetic="0.3">
-            <span>Voir tous les détails techniques</span>
+            <span>{t("projects.allDetails")}</span>
             <MoveRight size={28} aria-hidden="true" />
           </TransitionLink>
         </div>

@@ -15,7 +15,7 @@
     border-radius: var(--radius);
     overflow: hidden;
     border: 1px solid var(--border);
-    background: linear-gradient(135deg, var(--accent-soft), rgba(255, 255, 255, 0.02));
+    background: linear-gradient(135deg, var(--accent-soft), rgba(var(--veil), 0.02));
     aspect-ratio: 16 / 10;
     img {
       width: 100%;
@@ -96,7 +96,7 @@
     padding: 0.28rem 0.7rem;
     border-radius: 999px;
     border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--veil), 0.03);
     font-size: 0.78rem;
     color: var(--text-2);
     white-space: nowrap;

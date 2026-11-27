@@ -1,0 +1,271 @@
+@use '../abstracts/variables' as *;
+
+// Le « monde » : accueil, À propos et Parcours posés sur une carte que la
+// caméra parcourt. Tout ce qui suit ne vaut qu'en mode `.is-world` ; sans lui
+// (mouvement réduit) les mêmes enfants s'affichent en page classique.
+
+$reveal-margin: 260px; // plus large que l'ombre : le clip-path ne doit jamais la couper
+$hud-bottom: 1.2rem;
+
+.is-world {
+  .world__stage {
+    position: sticky;
+    top: 0;
+    height: 100lvh;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  .world__trace {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+
+    path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+  }
+
+  .world__helix {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2; // brins côté caméra : entre les fiches de derrière et celles de devant
+    pointer-events: none;
+
+    path {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+    }
+  }
+
+  .world__trace .is-back { opacity: 0.32; } // brins de l'hélice côté opposé
+
+  .panel {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+    transform-origin: 50% 50%;
+    will-change: transform;
+    --tone: var(--lagon);
+
+    &[data-tone='menthe'] { --tone: var(--menthe); }
+    &[data-tone='mandarine'] { --tone: var(--mandarine); }
+    &[data-tone='soleil'] { --tone: var(--soleil); }
+  }
+
+  // Apparition : le panneau se découvre de haut en bas quand la ligne l'atteint
+  .panel__in {
+    position: relative;
+    opacity: 0;
+    transform: translateY(28px);
+    clip-path: inset(0 0 100% 0 round 14px);
+    transition:
+      opacity 0.9s var(--ease),
+      transform 0.9s var(--ease),
+      clip-path 0.9s var(--ease);
+  }
+
+  .panel.is-on .panel__in {
+    opacity: 1;
+    transform: none;
+    clip-path: inset(-#{$reveal-margin} round 14px);
+  }
+
+  // Transport vers un lien : un panneau reste caché (is-hold) tant que les lignes ne sont
+  // pas revenues, puis il est libéré et se découvre comme d'habitude ; le hero, sans
+  // transition de base, se découvre en fondu.
+  .panel.is-hold .panel__in {
+    opacity: 0 !important;
+    transform: translateY(28px) !important;
+    clip-path: inset(0 0 100% 0 round 14px) !important;
+    transition: none !important;
+  }
+
+  .p-hero.is-hold .panel__in {
+    transform: none !important;
+    clip-path: none !important;
+  }
+
+  .p-hero.is-release .panel__in {
+    transition: opacity 0.8s var(--ease);
+  }
+
+  .measuring .panel__in {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  // Ombre colorée à trois couches, aux couleurs du chapitre
+  // Fond plein : la ligne passe sous les cartes, jamais à travers
+  .world__stage .card {
+    background: var(--bg-2);
+    backdrop-filter: none;
+    box-shadow:
+      0 50px 160px -40px color-mix(in srgb, var(--tone) calc(var(--shadow-a) * 100%), transparent),
+      0 18px 60px -22px color-mix(in srgb, var(--tone) calc(var(--shadow-b) * 100%), transparent),
+      0 0 0 1px color-mix(in srgb, var(--tone) 18%, transparent);
+  }
+
+  .p-hero {
+    width: 100vw;
+    height: 100svh;
+
+    .panel__in {
+      width: 100%;
+      height: 100%;
+      opacity: 1;
+      transform: none;
+      clip-path: none;
+      transition: none;
+    }
+
+    .hero {
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .hero__inner {
+      min-height: 0;
+      height: 100%;
+    }
+  }
+
+  .p-about { width: min(1000px, 74vw); }
+  .p-title, .p-ptitle { width: min(620px, 60vw); }
+  .p-card { width: min(780px, 62vw); backface-visibility: hidden; cursor: pointer; }
+  .p-step { width: clamp(230px, 22vw, 320px); }
+
+  .p-title .panel__in,
+  .p-ptitle .panel__in {
+    display: inline-block;
+    background: var(--bg);
+    padding: 0.15em 0.35em 0.2em;
+    margin-left: -0.35em;
+    border-radius: 10px;
+  }
+
+  .chapter {
+    font-size: clamp(2.2rem, 5.5vw, 4.4rem);
+  }
+
+  .about-card {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2.5rem;
+    padding: clamp(1.6rem, 4vw, 3.2rem);
+
+    h2 {
+      grid-column: 1 / -1;
+      font-size: clamp(2.2rem, 5vw, 4rem);
+    }
+
+    &__facts {
+      display: grid;
+      gap: 1.1rem;
+      align-content: start;
+      margin: 0;
+
+      dt { font-size: 0.88rem; color: var(--text-2); }
+      dd { margin: 0; font-weight: 600; }
+    }
+  }
+
+  .step {
+    position: relative;
+    padding: 1.2rem 1.3rem 1.1rem;
+    border-radius: 14px;
+
+    h3 { font-size: 1.3rem; font-weight: 500; margin-top: 0.25rem; }
+    p { color: var(--text-2); font-size: 0.95rem; }
+
+    &__when { color: var(--text-2); font-size: 0.9rem; }
+
+    // Le centre de la pastille (13 px + 7 px) est le point de passage de la ligne
+    &__dot {
+      position: absolute;
+      top: -7px;
+      left: 13px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: 3px solid var(--menthe);
+    }
+  }
+
+  // Fiche projet : image à gauche, texte à droite. Description, technos et liens
+  // n'apparaissent que sur la fiche de face (--focus, posé par le moteur).
+  .fiche {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    border-radius: 8px;
+    overflow: hidden;
+
+    &__media { min-height: 300px; overflow: hidden; img { width: 100%; height: 100%; object-fit: cover; } }
+    &__body { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.5rem 1.6rem; h3 { font-size: clamp(1.6rem, 2.6vw, 2.25rem); font-weight: 600; } }
+    &__when { color: var(--text-2); font-size: 0.92rem; }
+    &__more { display: flex; flex-direction: column; gap: 0.7rem; flex: 1; margin-top: 0.3rem; opacity: var(--focus, 1); }
+    &__intro { color: var(--text-2); font-size: 0.98rem; max-width: 40ch; }
+    &__tags { color: var(--mandarine); font-weight: 600; font-size: 0.92rem; }
+    &__links { display: flex; gap: 1.2rem; margin-top: auto; flex-wrap: wrap; }
+    &__link { display: inline-flex; align-items: center; gap: 0.4rem; padding-bottom: 2px; font-weight: 600; border-bottom: 1.5px solid var(--mandarine); }
+  }
+
+  .about__text .word { opacity: 0.22; }
+
+  .world__hud {
+    position: absolute;
+    left: clamp(1.25rem, 5vw, 4rem);
+    bottom: $hud-bottom;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: var(--bg);
+    font-size: 0.9rem;
+    color: var(--text-2);
+  }
+
+  .world__bar {
+    width: 110px;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--border);
+    overflow: hidden;
+
+    span {
+      display: block;
+      height: 100%;
+      background: var(--tone, var(--lagon));
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+  }
+}
+
+@include respond-to(tablet) {
+  .is-world {
+    .p-about { width: calc(100vw - 2.5rem); }
+    .p-title, .p-ptitle, .p-step, .p-card { width: calc(100vw - 2.5rem); }
+    .about-card { grid-template-columns: 1fr; gap: 1.2rem; padding: 1.4rem; }
+    .fiche { grid-template-columns: 1fr; }
+    .fiche__media { min-height: 0; aspect-ratio: 16 / 9; }
+    .fiche__body { padding: 1.1rem 1.2rem 1.2rem; gap: 0.4rem; }
+    .fiche__body h3 { font-size: 1.6rem; }
+    .about-card h2, .chapter { font-size: clamp(2rem, 9vw, 2.6rem); }
+  }
+}

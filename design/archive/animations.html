@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette animation — « Le fil » · mael-llado.com</title>
+<!--
+  Maquette Léa — MAEL-211. Statique, hors du vrai site.
+  Ouvrir directement dans le navigateur (GSAP + Lenis chargés depuis jsDelivr : connexion requise).
+  ?reduced=1 simule prefers-reduced-motion.
+-->
+<style>
+@font-face { font-family: "Clash Display"; src: url("../../src/assets/fonts/ClashDisplay-Variable.woff2") format("woff2"); font-weight: 200 700; font-display: swap; }
+@font-face { font-family: "Supreme"; src: url("../../src/assets/fonts/Supreme-Variable.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+:root {
+  --text: #f1f2f4; --text-2: #a8adb6; --text-3: #6f757e;
+  --accent: #09bcf5;
+  --accent-soft: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-line: color-mix(in srgb, var(--accent) 32%, transparent);
+  --border: rgba(255,255,255,.09); --border-strong: rgba(255,255,255,.16);
+  --bg: #0a0b0d; --bg-2: #0f1114;
+  --radius: 18px; --radius-lg: 26px;
+  --shell: min(1180px, 100% - 3rem);
+  --ease: cubic-bezier(.22,1,.36,1);
+  /* Nouveaux tokens : le fil */
+  --thread-w: 1.5px;
+  --thread-idle: rgba(255,255,255,.07);
+  --thread-glow: 0 0 12px 2px color-mix(in srgb, var(--accent) 70%, transparent), 0 0 40px 8px color-mix(in srgb, var(--accent) 25%, transparent);
+  --gx: 24px;          /* abscisse du fil, calculée en JS */
+  --shell-left: 48px;  /* bord gauche du contenu, calculé en JS */
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { background: var(--bg); color: var(--text); font: 400 1.0625rem/1.6 "Supreme", system-ui, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+h1, h2, h3 { font-family: "Clash Display", sans-serif; font-weight: 600; line-height: 1; letter-spacing: -.02em; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+.shell { width: var(--shell); margin-inline: auto; }
+@media (max-width: 768px) { :root { --shell: min(100% - 2.5rem, 1180px); } }
+
+/* ---------- Le fil ---------- */
+.thread { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 0; }
+.thread__base { fill: none; stroke: var(--thread-idle); stroke-width: var(--thread-w); }
+.thread__line { fill: none; stroke: var(--accent); stroke-width: var(--thread-w); stroke-linecap: round; }
+.thread-head {
+  position: fixed; left: 0; top: 0; z-index: 50; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%; background: #e9faff; box-shadow: var(--thread-glow);
+  pointer-events: none; opacity: 0; will-change: transform;
+}
+.thread-head::after { /* la seule boucle ambiante permanente */
+  content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid var(--accent-line);
+  animation: head-pulse 2.4s var(--ease) infinite;
+}
+@keyframes head-pulse { 0% { transform: scale(.6); opacity: 1; } 100% { transform: scale(2.4); opacity: 0; } }
+.thread-head__hint {
+  position: absolute; left: 50%; top: 20px; translate: -50% 0; white-space: nowrap; writing-mode: vertical-rl;
+  font-size: .75rem; letter-spacing: .14em; text-transform: uppercase; color: var(--text-2); opacity: 0;
+}
+
+/* Une section s'« allume » quand la tête du fil la croise (centre de l'écran) */
+.mark { position: relative; display: flex; align-items: center; gap: .9rem; margin-bottom: 1.25rem;
+  font-size: .8rem; letter-spacing: .16em; text-transform: uppercase; color: var(--text-3); transition: color .6s var(--ease); }
+.mark__tick { position: absolute; right: calc(100% + 0px); top: 50%; height: var(--thread-w); background: var(--accent);
+  width: calc(var(--shell-left) - var(--gx)); transform-origin: left; transform: scaleX(0); transition: transform .7s var(--ease); }
+.mark__idx { font-variant-numeric: tabular-nums; }
+.is-lit .mark { color: var(--accent); }
+.is-lit .mark__tick { transform: scaleX(1); }
+
+section { position: relative; }
+.section { padding-block: clamp(6rem, 14vh, 10rem); }
+.section h2, .projects h2, .contact h2 { font-size: clamp(2.4rem, 6vw, 4.6rem); margin-bottom: 2.5rem; }
+
+/* ---------- Moment 1 — Hero ---------- */
+.hero { min-height: 100svh; display: flex; align-items: center; padding-block: 7rem 5rem; isolation: isolate; }
+.hero__grid { position: absolute; inset: 0; z-index: -1; opacity: .5;
+  background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 64px 64px; mask-image: radial-gradient(60% 60% at 62% 45%, #000, transparent 78%);
+  animation: grid-drift 60s linear infinite; }
+@keyframes grid-drift { to { background-position: 64px 64px; } }
+.hero__inner { display: grid; grid-template-columns: 1.25fr .75fr; gap: 3rem; align-items: center; position: relative; z-index: 1; }
+.hero__loc { color: var(--text-2); font-size: .9rem; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 1.5rem; }
+.hero__name { font-size: clamp(3.6rem, 11vw, 9.5rem); line-height: .92; }
+.hero__first { display: block; color: var(--text-2); font-weight: 400; }
+.hero__last { display: inline-block; padding-bottom: .06em; perspective: 600px; }
+.hero__last .char { display: inline-block; }
+.hero__role { margin-top: 2rem; font-weight: 600; }
+.hero__tagline { margin-top: .75rem; max-width: 52ch; color: var(--text-2); }
+.hero__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
+.btn { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.4rem; border-radius: 999px; border: 1px solid var(--border-strong); font-weight: 600; transition: background .3s, border-color .3s; }
+.btn--primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.hero__portrait { border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-2); border: 1px solid var(--border); aspect-ratio: 4/5; }
+.hero__portrait img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- Bandeau ---------- */
+.marquee { padding-block: 1.6rem; border-block: 1px solid var(--border); overflow: hidden; }
+.marquee__track { display: flex; gap: 3rem; width: max-content; font: 500 clamp(1.4rem, 3vw, 2.2rem) "Clash Display"; color: var(--text-3); white-space: nowrap; }
+.marquee__track span::after { content: "•"; margin-left: 3rem; color: var(--accent-line); }
+
+/* ---------- Moment 2 — Transition À propos → Parcours ---------- */
+.about__grid { display: grid; grid-template-columns: 1.4fr .8fr; gap: 3rem; }
+.about__text { font-size: clamp(1.3rem, 2.4vw, 1.9rem); line-height: 1.4; font-family: "Clash Display"; font-weight: 500; }
+.about__text .w { opacity: .18; }
+.briefs { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; align-self: start; }
+.briefs div { background: var(--bg); padding: 1rem 1.2rem; }
+.briefs dt { font-size: .75rem; letter-spacing: .14em; color: var(--text-3); }
+.briefs dd { margin-top: .2rem; }
+.timeline { list-style: none; display: grid; gap: 3.5rem; }
+.timeline li { position: relative; display: grid; grid-template-columns: 10rem 1fr; gap: 2rem; }
+.timeline__dot { position: absolute; top: .45rem; left: calc(var(--gx) - var(--shell-left) - 5px); width: 11px; height: 11px; border-radius: 50%;
+  background: var(--bg); border: 1.5px solid var(--border-strong); transition: background .5s, border-color .5s, box-shadow .5s; }
+.timeline li.is-lit .timeline__dot { background: var(--accent); border-color: var(--accent); box-shadow: var(--thread-glow); }
+.timeline__period { color: var(--text-3); font-size: .9rem; padding-top: .2rem; }
+.timeline h3 { font-size: 1.5rem; font-weight: 500; }
+.timeline p { color: var(--text-2); }
+
+/* ---------- Moment 3 — Projets puis contact ---------- */
+.projects__pin { min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding-block: 6rem 4rem; position: relative; overflow: hidden; }
+.projects__pin > .shell, .projects__track { position: relative; z-index: 1; }
+.projects__track { display: flex; gap: 1.5rem; padding-left: max(1.5rem, (100vw - 1180px) / 2); width: max-content; }
+.card { width: min(420px, 78vw); flex: none; }
+.card__media { border-radius: var(--radius); overflow: hidden; aspect-ratio: 16/10; background: var(--bg-2); border: 1px solid var(--border); }
+.card__media img { width: 118%; height: 100%; object-fit: cover; max-width: none; }
+.card__meta { display: flex; justify-content: space-between; margin-top: 1rem; color: var(--text-3); font-size: .9rem; }
+.card h3 { font-size: 1.6rem; font-weight: 500; margin-top: .3rem; }
+.projects__rail-space { height: 3.5rem; }
+.contact { min-height: 90svh; display: grid; place-items: center; text-align: center; padding-block: 8rem; }
+.contact .mark { justify-content: center; }
+.contact .mark__tick { display: none; }
+.contact h2 { margin-inline: auto; max-width: 14ch; }
+.contact p { color: var(--text-2); margin: -1rem auto 2.5rem; max-width: 46ch; }
+.contact__cta { position: relative; z-index: 1; font-size: 1.1rem; min-height: 56px; padding: 0 2rem; transition: box-shadow .8s var(--ease), border-color .8s; }
+.contact.is-closed .contact__cta { box-shadow: 0 0 0 6px var(--accent-soft), 0 0 60px 4px color-mix(in srgb, var(--accent) 30%, transparent); }
+.footer { padding: 4rem 0 2rem; overflow: hidden; border-top: 1px solid var(--border); }
+.footer__name { font: 600 clamp(4rem, 19vw, 17rem) / .8 "Clash Display"; letter-spacing: -.04em; white-space: nowrap; color: #15181c; }
+.footer__name .char { display: inline-block; }
+
+/* ---------- Mobile ---------- */
+@media (max-width: 1023px) {
+  .hero__inner, .about__grid { grid-template-columns: 1fr; }
+  .hero__portrait { max-width: 320px; order: -1; }
+  .projects__pin { min-height: 0; }
+  .projects__track { flex-direction: column; padding-left: 0; width: var(--shell); margin-inline: auto; }
+  .card { width: 100%; }
+  .timeline li { grid-template-columns: 1fr; gap: .3rem; }
+}
+
+/* ---------- Habillage maquette (n'existe pas dans le site) ---------- */
+.mk-bar { position: fixed; top: 12px; left: 50%; translate: -50% 0; z-index: 60; display: flex; gap: .5rem; align-items: center;
+  padding: .45rem .5rem .45rem 1rem; border-radius: 999px; background: rgba(15,17,20,.82); backdrop-filter: blur(10px); border: 1px solid var(--border); font-size: .8rem; color: var(--text-2); white-space: nowrap; }
+.mk-bar strong { color: var(--text); font-weight: 600; }
+.mk-bar a { padding: .35rem .8rem; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--text); }
+.mk-moment { position: fixed; right: 16px; bottom: 16px; z-index: 60; padding: .5rem .9rem; border-radius: 12px; background: rgba(15,17,20,.82); border: 1px solid var(--border); font-size: .8rem; color: var(--text-2); }
+.mk-moment b { color: var(--accent); }
+
+/* ---------- Mouvement réduit : tout est lisible, le fil est tracé, rien ne bouge ---------- */
+.reduced .thread__line { stroke-dashoffset: 0 !important; opacity: .45; }
+.reduced .thread-head { display: none; }
+.is-scrolled .thread-head__hint { opacity: 0 !important; transition: opacity .3s; }
+.reduced .hero__grid, .reduced .thread-head::after { animation: none; }
+.reduced .about__text .w { opacity: 1; }
+.reduced .mark__tick { transform: scaleX(1); transition: none; }
+.reduced .mark { color: var(--accent); }
+.reduced .mk-moment { display: none; }
+</style>
+</head>
+<body>
+
+<div class="mk-bar" aria-hidden="true"><strong>Maquette « Le fil »</strong> · Léa <a id="mk-toggle" href="?reduced=1">Simuler mouvement réduit</a></div>
+<div class="mk-moment" aria-hidden="true">Moment <b id="mk-moment">① Entrée</b></div>
+<div class="thread-head" aria-hidden="true"><span class="thread-head__hint">Faites défiler</span></div>
+
+<main>
+  <!-- ① ENTRÉE -->
+  <section class="hero" data-moment="① Entrée">
+    <div class="hero__grid" aria-hidden="true"></div>
+    <svg class="thread" aria-hidden="true"></svg>
+    <div class="shell hero__inner">
+      <div class="hero__text">
+        <p class="hero__loc">Bordeaux, France · Recherche d’alternance</p>
+        <h1 class="hero__name"><span class="hero__first">Maël</span><span class="hero__last">LLADO</span></h1>
+        <p class="hero__role">Étudiant en informatique · Développeur Full Stack</p>
+        <p class="hero__tagline">Développeur Full Stack curieux et polyvalent, je conçois des solutions de bout en bout, du Front-end au Back-end, jusqu’au déploiement, à la gestion des serveurs, des bases de données et des outils d’administration.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#contact">Me contacter</a>
+          <a class="btn" href="#projets">Voir les projets</a>
+          <a class="btn" href="#">Télécharger le CV</a>
+        </div>
+      </div>
+      <div class="hero__portrait"><img src="../../src/assets/images/portrait.png" alt="Portrait de Maël Llado"></div>
+    </div>
+  </section>
+
+  <section class="marquee" aria-hidden="true" data-thread="line">
+    <svg class="thread"></svg>
+    <div class="marquee__track"></div>
+  </section>
+
+  <!-- ② TRANSITION -->
+  <section class="section about" data-moment="② Transition" data-thread="line">
+    <svg class="thread" aria-hidden="true"></svg>
+    <div class="shell" data-lit>
+      <p class="mark"><span class="mark__tick"></span><span class="mark__idx">01</span> À propos</p>
+      <h2 data-reveal>À propos de moi</h2>
+      <div class="about__grid">
+        <p class="about__text">Je construis des applications complètes — interface, API, base de données — et je les mets moi-même en production sur mon serveur. Ce portfolio en est la preuve : React, Express, PostgreSQL, Docker, derrière Cloudflare.</p>
+        <dl class="briefs" data-reveal>
+          <div><dt>FORMATION</dt><dd>Ynov Campus Bordeaux</dd></div>
+          <div><dt>DIPLÔME</dt><dd>Bac Pro SN option RISC — Très Bien</dd></div>
+          <div><dt>LOCALISATION</dt><dd>Bordeaux, France</dd></div>
+          <div><dt>RECHERCHE</dt><dd>Alternance / stage en développement</dd></div>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="section parcours" data-moment="② Transition" data-thread="line">
+    <svg class="thread" aria-hidden="true"></svg>
+    <div class="shell" data-lit>
+      <p class="mark"><span class="mark__tick"></span><span class="mark__idx">02</span> Parcours</p>
+      <h2 data-reveal>Parcours et expériences</h2>
+      <ol class="timeline">
+        <li data-reveal><span class="timeline__dot"></span><span class="timeline__period">Aujourd’hui</span><div><h3>Ynov Campus Bordeaux — 2ᵉ année</h3><p>Étudiant en informatique</p></div></li>
+        <li data-reveal><span class="timeline__dot"></span><span class="timeline__period">Stage</span><div><h3>Snark Factory</h3><p>Développement web</p></div></li>
+        <li data-reveal><span class="timeline__dot"></span><span class="timeline__period">Stage</span><div><h3>Maintenance &amp; boutique spécialisée</h3><p>Support et matériel informatique</p></div></li>
+        <li data-reveal><span class="timeline__dot"></span><span class="timeline__period">Lycée professionnel</span><div><h3>Cybersécurité &amp; Réseaux</h3><p>Premiers pas dans le monde de l’informatique</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ③ MOMENT FORT -->
+  <section class="projects" id="projets" data-moment="③ Projets">
+    <div class="projects__pin">
+      <svg class="thread" aria-hidden="true"></svg>
+      <div class="shell" data-lit>
+        <p class="mark"><span class="mark__tick"></span><span class="mark__idx">03</span> Projets</p>
+        <h2 data-reveal style="margin-bottom:1.5rem">Projets</h2>
+      </div>
+      <div class="projects__track">
+        <article class="card"><div class="card__media"><img src="../../src/assets/images/Eldoria.webp" alt=""></div><div class="card__meta"><span>Ynov B1</span><span>Go</span></div><h3>Projet_Red : Eldoria</h3></article>
+        <article class="card"><div class="card__media"><img src="../../src/assets/images/FaceRecognition.webp" alt=""></div><div class="card__meta"><span>Bac Pro SN</span><span>Python</span></div><h3>Face Recognition</h3></article>
+        <article class="card"><div class="card__media"><img src="../../src/assets/images/CTF.webp" alt=""></div><div class="card__meta"><span>2025</span><span>Root Me</span></div><h3>CTF</h3></article>
+        <article class="card"><div class="card__media"><img src="../../src/assets/images/onepiecedle.png" alt=""></div><div class="card__meta"><span>Perso</span><span>Web</span></div><h3>One Piece DLE</h3></article>
+        <article class="card"><div class="card__media"><img src="../../src/assets/images/cloudperso.png" alt=""></div><div class="card__meta"><span>Perso</span><span>Infra</span></div><h3>Cloud Perso</h3></article>
+        <article class="card"><div class="card__media"><img src="../../src/assets/images/tecktalk.png" alt=""></div><div class="card__meta"><span>Ydays</span><span>Web</span></div><h3>Tech Talk</h3></article>
+      </div>
+      <div class="projects__rail-space"></div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact" data-moment="③ Contact">
+    <svg class="thread" aria-hidden="true"></svg>
+    <div class="shell" data-lit>
+      <p class="mark"><span class="mark__tick"></span><span class="mark__idx">04</span> Contact</p>
+      <h2 data-reveal>Discutons de votre projet</h2>
+      <p data-reveal>Je cherche une alternance en développement. Un message suffit.</p>
+      <a class="btn btn--primary contact__cta" href="#">Écrire à Maël</a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="footer__name" aria-hidden="true">MAËL LLADO</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrambleTextPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const REDUCED = params.has("reduced") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const DESKTOP = "(min-width: 1024px)";
+  const NS = "http://www.w3.org/2000/svg";
+  const SKILLS = ["React", "TypeScript", "Node.js", "Express", "PostgreSQL", "Docker", "Go", "Python", "Linux", "Nginx"];
+  const hasScramble = typeof window.ScrambleTextPlugin !== "undefined";
+
+  const toggle = document.getElementById("mk-toggle");
+  if (REDUCED) { toggle.textContent = "Revoir avec animations"; toggle.href = "?"; document.documentElement.classList.add("reduced"); }
+
+  // --- Contenu (dans le site : vient de l'API) ---------------------------
+  document.querySelector(".marquee__track").innerHTML =
+    [...SKILLS, ...SKILLS, ...SKILLS].map((s) => `<span>${s}</span>`).join("");
+  const splitChars = (el) => {
+    el.setAttribute("aria-label", el.textContent);
+    el.innerHTML = [...el.textContent].map((c) => `<span class="char" aria-hidden="true">${c === " " ? "&nbsp;" : c}</span>`).join("");
+  };
+  const about = document.querySelector(".about__text");
+  about.innerHTML = about.textContent.split(" ").map((w) => `<span class="w">${w}</span>`).join(" ");
+  splitChars(document.querySelector(".hero__last"));
+  splitChars(document.querySelector(".footer__name"));
+
+  gsap.registerPlugin(ScrollTrigger, ...(hasScramble ? [ScrambleTextPlugin] : []));
+
+  // --- Géométrie du fil ---------------------------------------------------
+  // Chaque section porte son propre segment SVG, tracé entre « haut de section
+  // au centre de l'écran » et « bas de section au centre » : les segments
+  // s'enchaînent donc sans couture, et la tête reste au centre de l'écran.
+  const root = document.documentElement;
+  const measureGutter = () => {
+    const shellLeft = document.querySelector(".shell").getBoundingClientRect().left;
+    const gx = Math.max(8, Math.round(shellLeft - (innerWidth >= 1024 ? 28 : 10)));
+    root.style.setProperty("--gx", `${gx}px`);
+    root.style.setProperty("--shell-left", `${shellLeft}px`);
+    return gx;
+  };
+  const local = (el, host) => {
+    const a = el.getBoundingClientRect(), b = host.getBoundingClientRect();
+    return { x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height };
+  };
+  const makePath = (svg, d) => {
+    const base = document.createElementNS(NS, "path");
+    base.setAttribute("class", "thread__base"); base.setAttribute("d", d);
+    const line = document.createElementNS(NS, "path");
+    line.setAttribute("class", "thread__line"); line.setAttribute("d", d);
+    svg.append(base, line);
+    const len = line.getTotalLength();
+    line.style.strokeDasharray = `${len} ${len + 2}`;
+    line.style.strokeDashoffset = REDUCED ? 0 : len;
+    return { line, len, svg };
+  };
+  // Contour en pilule autour d'un bouton, commencé au milieu du côté d'arrivée
+  const pill = (x, y, w, h, fromRight) => {
+    const r = h / 2, cy = y + r;
+    return fromRight
+      ? `L ${x + w} ${cy} A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} H ${x + r} A ${r} ${r} 0 0 1 ${x + r} ${y} H ${x + w - r} A ${r} ${r} 0 0 1 ${x + w} ${cy}`
+      : `L ${x} ${cy} A ${r} ${r} 0 0 1 ${x + r} ${y} H ${x + w - r} A ${r} ${r} 0 0 1 ${x + w - r} ${y + h} H ${x + r} A ${r} ${r} 0 0 1 ${x} ${cy}`;
+  };
+
+  // --- Tête lumineuse : suit l'extrémité du tracé actif -------------------
+  const head = document.querySelector(".thread-head");
+  const hint = head.querySelector(".thread-head__hint");
+  const headX = gsap.quickSetter(head, "x", "px"), headY = gsap.quickSetter(head, "y", "px");
+  const placeHead = (seg, p) => {
+    const pt = seg.line.getPointAtLength(seg.len * p);
+    const r = seg.svg.getBoundingClientRect();
+    headX(r.left + pt.x); headY(r.top + pt.y);
+  };
+  const draw = (seg, p) => {
+    seg.line.style.strokeDashoffset = seg.len * (1 - p);
+    if (p > 0.001 && p < 0.999) placeHead(seg, p);
+  };
+  const scrubSegment = (seg, vars) => ScrollTrigger.create({
+    ...vars,
+    onUpdate: (st) => draw(seg, st.progress),
+    onLeave: () => draw(seg, 1), onLeaveBack: () => draw(seg, 0),
+  });
+
+  const init = () => {
+    const gx = measureGutter();
+    const isDesktop = matchMedia(DESKTOP).matches;
+    document.querySelectorAll("svg.thread").forEach((s) => {
+      s.innerHTML = "";
+      const r = s.getBoundingClientRect();
+      s.setAttribute("viewBox", `0 0 ${r.width} ${r.height}`);
+    });
+
+    // ① HERO — le fil souligne le nom, puis se replie dans la gouttière
+    const heroEl = document.querySelector(".hero");
+    const heroSvg = heroEl.querySelector("svg");
+    const last = local(document.querySelector(".hero__last"), heroEl);
+    const uy = last.y + last.h - 4;
+    const heroA = makePath(heroSvg, `M ${last.x + last.w} ${uy} L ${last.x} ${uy} Q ${gx} ${uy} ${gx} ${uy + 70}`);
+    const heroB = makePath(heroSvg, `M ${gx} ${uy + 70} L ${gx} ${heroEl.offsetHeight}`);
+
+    // ② Segments droits (bandeau, à propos, parcours)
+    const lines = [...document.querySelectorAll('[data-thread="line"]')].map((host) =>
+      ({ host, seg: makePath(host.querySelector("svg"), `M ${gx} 0 L ${gx} ${host.offsetHeight}`) }));
+
+    // ③ PROJETS — descend, devient le rail sous les cartes, redescend à droite
+    const proj = document.querySelector(".projects");
+    const pin = proj.querySelector(".projects__pin");
+    const projSvg = pin.querySelector("svg");
+    const track = proj.querySelector(".projects__track");
+    const t = local(track, pin);
+    const railY = t.y + t.h + 28;
+    const endX = isDesktop ? innerWidth - gx : gx;
+    const projA = makePath(projSvg, `M ${gx} 0 L ${gx} ${railY}`);
+    const projB = isDesktop ? makePath(projSvg, `M ${gx} ${railY} L ${endX} ${railY}`) : null;
+    const projC = makePath(projSvg, `M ${endX} ${railY} L ${endX} ${pin.offsetHeight}`);
+
+    // ③ CONTACT — le fil converge vers le bouton et l'entoure : la boucle se ferme
+    const contact = document.querySelector(".contact");
+    const cta = local(contact.querySelector(".contact__cta"), contact);
+    // Le fil longe le bord (jamais à travers le texte) puis rejoint le bouton à sa hauteur
+    const pad = 12, px = cta.x - pad, pw = cta.w + pad * 2, ph = cta.h + pad * 2, py = cta.y - pad, cy = py + ph / 2;
+    const fromRight = endX > cta.x + cta.w;
+    const contactSeg = makePath(contact.querySelector("svg"),
+      `M ${endX} 0 L ${endX} ${cy - 60} Q ${endX} ${cy} ${endX + (fromRight ? -60 : 60)} ${cy} ` + pill(px, py, pw, ph, fromRight));
+
+    if (REDUCED) {
+      document.querySelectorAll("[data-lit], .timeline li").forEach((el) => el.classList.add("is-lit"));
+      contact.classList.add("is-closed");
+      return;
+    }
+
+    // --- ① Entrée : une seule timeline courte (≈ 1,8 s) --------------------
+    if (!window.__introDone) {
+      window.__introDone = true;
+      placeHead(heroA, 0);
+      const proxy = { p: 0 };
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      tl.from(".hero__loc", { opacity: 0, y: 16, duration: .6 })
+        .from(".hero__last .char", { yPercent: 110, rotateX: -70, opacity: 0, duration: .9, stagger: .04, ease: "power4.out" }, 0.2)
+        .fromTo(".hero__portrait", { clipPath: "inset(100% 0% 0% 0% round 26px)" },
+                                   { clipPath: "inset(0% 0% 0% 0% round 26px)", duration: 1.2, ease: "power4.inOut" }, 0.2)
+        .from(".hero__portrait img", { scale: 1.25, duration: 1.6 }, 0.2)
+        .to(head, { opacity: 1, duration: .2 }, 0.85)
+        .to(proxy, { p: 1, duration: .95, ease: "power2.inOut", onUpdate: () => draw(heroA, proxy.p) }, 0.85)
+        .from(".hero__role, .hero__tagline, .hero__actions .btn", { opacity: 0, y: 18, duration: .7, stagger: .06 }, 1.0)
+        .to(hint, { opacity: 1, duration: .5 }, 1.8);
+      if (hasScramble) tl.to(".hero__first", { duration: 1, scrambleText: { text: "Maël", chars: "upperCase", speed: .5 } }, 0.05);
+    } else {
+      draw(heroA, 1); placeHead(heroA, 1); gsap.set(head, { opacity: 1 });
+    }
+    // Sortie du hero (gardée) : le texte recule, le portrait prend de la profondeur
+    gsap.to(".hero__text", { yPercent: -12, opacity: .2, ease: "none",
+      scrollTrigger: { trigger: heroEl, start: "top top", end: "bottom top", scrub: true } });
+    gsap.to(".hero__portrait", { yPercent: 14, ease: "none",
+      scrollTrigger: { trigger: heroEl, start: "top top", end: "bottom top", scrub: true } });
+    scrubSegment(heroB, { trigger: heroEl, start: "top top", end: "bottom center" });
+
+    // --- ② Transitions : la même règle pour toutes les sections ------------
+    lines.forEach(({ host, seg }) => scrubSegment(seg, { trigger: host, start: "top center", end: "bottom center" }));
+    // Lecture d'abord : le contenu apparaît AVANT que le fil n'arrive (preset unique)
+    gsap.utils.toArray("[data-reveal]").forEach((el) => gsap.from(el, {
+      opacity: 0, y: 32, duration: .9, ease: "power3.out", clearProps: "transform,opacity",
+      scrollTrigger: { trigger: el, start: "top 85%", once: true },
+    }));
+    // À propos : les mots s'allument au rythme du scroll (gardé)
+    gsap.to(".about__text .w", { opacity: 1, stagger: .1, ease: "none",
+      scrollTrigger: { trigger: ".about__text", start: "top 75%", end: "bottom 50%", scrub: .4 } });
+
+    // --- ③ Projets : le rail horizontal EST la barre de progression --------
+    if (isDesktop) {
+      const distance = () => track.scrollWidth - innerWidth + gx * 2;
+      const slide = gsap.to(track, { x: () => -distance(), ease: "none" });
+      scrubSegment(projA, { trigger: proj, start: "top center", end: "top top" });
+      const pinST = ScrollTrigger.create({ trigger: proj, pin, start: "top top", end: () => `+=${distance()}`,
+        scrub: true, animation: slide, invalidateOnRefresh: true,
+        onUpdate: (st) => draw(projB, st.progress), onLeave: () => draw(projB, 1), onLeaveBack: () => draw(projB, 0) });
+      scrubSegment(projC, { start: () => pinST.end, end: () => pinST.end + pin.offsetHeight - innerHeight / 2 });
+      gsap.utils.toArray(".card__media img").forEach((img) => gsap.fromTo(img, { xPercent: -10 }, { xPercent: 0, ease: "none",
+        scrollTrigger: { trigger: img.closest(".card"), containerAnimation: slide, start: "left right", end: "right left", scrub: true } }));
+    } else {
+      scrubSegment(projA, { trigger: pin, start: "top center", end: `top+=${railY} center` });
+      scrubSegment(projC, { trigger: pin, start: `top+=${railY} center`, end: "bottom center" });
+    }
+
+    // Allumage : quand la tête croise un repère, il s'allume et le reste
+    document.querySelectorAll("[data-lit], .timeline li").forEach((el) => ScrollTrigger.create({
+      trigger: el, start: "top center",
+      onEnter: () => el.classList.add("is-lit"), onLeaveBack: () => el.classList.remove("is-lit"),
+    }));
+
+    // Contact : la boucle se ferme quand le bouton arrive au centre de l'écran
+    scrubSegment(contactSeg, { trigger: contact, start: "top center", endTrigger: ".contact__cta", end: "clamp(center center)" });
+    ScrollTrigger.create({ trigger: ".contact__cta", start: "clamp(center center)", end: "max",
+      onEnter: () => { contact.classList.add("is-closed"); gsap.to(head, { opacity: 0, duration: .4 }); },
+      onLeaveBack: () => { contact.classList.remove("is-closed"); gsap.to(head, { opacity: 1, duration: .2 }); } });
+
+    // Pied de page : le nom monte lettre par lettre (gardé)
+    gsap.from(".footer__name .char", { yPercent: 100, stagger: .03, ease: "power2.out",
+      scrollTrigger: { trigger: ".footer", start: "top 96%", end: "bottom bottom", scrub: .6 } });
+
+    // Repère de maquette : quel moment est à l'écran
+    document.querySelectorAll("[data-moment]").forEach((el) => ScrollTrigger.create({ trigger: el, start: "top center", end: "bottom center",
+      onToggle: (st) => { if (st.isActive) document.getElementById("mk-moment").textContent = el.dataset.moment; } }));
+  };
+
+  // --- Scroll fluide + réaction à la vitesse (gardés, unifiés) ------------
+  if (!REDUCED) {
+    const lenis = new Lenis({ duration: 1.15 });
+    lenis.on("scroll", ScrollTrigger.update);
+    gsap.ticker.add((time) => lenis.raf(time * 1000));
+    gsap.ticker.lagSmoothing(0);
+    const stretch = gsap.quickTo(head, "scale", { duration: .3, ease: "power3.out" });
+    const loop = gsap.to(".marquee__track", { xPercent: -33.333, duration: 40, ease: "none", repeat: -1 });
+    lenis.on("scroll", ({ velocity }) => {
+      stretch(1 + Math.min(Math.abs(velocity) / 20, 1));  // la tête grossit avec la vitesse
+      gsap.to(loop, { timeScale: (velocity < 0 ? -1 : 1) * (1 + Math.min(Math.abs(velocity) / 8, 4)), duration: .3, overwrite: true });
+    });
+  }
+
+  // L'invitation à scroller disparaît dès le premier défilement
+  addEventListener("scroll", () => root.classList.toggle("is-scrolled", scrollY > 40), { passive: true });
+
+  let ctx;
+  const start = () => { ctx = gsap.context(init); ScrollTrigger.sort(); ScrollTrigger.refresh(); };
+  let resizeTimer;
+  addEventListener("resize", () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { if (ctx) ctx.revert(); start(); }, 250); });
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => requestAnimationFrame(start));
+})();
+</script>
+</body>
+</html>

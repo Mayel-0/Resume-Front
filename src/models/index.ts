@@ -1,16 +1,20 @@
 // Modèles des données renvoyées par l'API (miroir de Resume-Back/src/models).
 import type { Brief } from "./brief";
+import type { HeroLayer } from "./heroLayer";
 import type { Profile } from "./profile";
 import type { Project, ProjectTag, ProjectTechStack } from "./project";
 import type { Section } from "./section";
+import type { SiteTexts } from "./siteText";
 import type { SkillCategory, SkillItem } from "./skill";
 import type { Social } from "./social";
 import type { TimelineItem } from "./timeline";
 
 export type { Brief } from "./brief";
+export type { HeroLayer } from "./heroLayer";
 export type { Profile } from "./profile";
 export type { Project, ProjectTag, ProjectTechStack, TechType, Visibility } from "./project";
 export type { Section } from "./section";
+export type { SiteTexts } from "./siteText";
 export type { SkillCategory, SkillItem } from "./skill";
 export type { Social } from "./social";
 export type { TimelineItem } from "./timeline";
@@ -21,6 +25,8 @@ export type { TimelineItem } from "./timeline";
  */
 export interface ApiEndpoints {
   "/api/profil": Profile[];
+  "/api/hero-layers": HeroLayer[];
+  "/api/site-texts": SiteTexts;
   "/api/socials": Social[];
   "/api/timeline": TimelineItem[];
   "/api/sections": Section[];
@@ -33,3 +39,6 @@ export interface ApiEndpoints {
 }
 
 export type ApiEndpoint = keyof ApiEndpoints;
+
+/** Les endpoints qui renvoient une liste (tous sauf les textes, qui forment un objet). */
+export type ListEndpoint = Exclude<ApiEndpoint, "/api/site-texts">;

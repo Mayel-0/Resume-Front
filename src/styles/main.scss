@@ -5,11 +5,13 @@
 
 @use './components/header';
 @use './components/hero';
+@use './components/world';
 @use './components/about';
 @use './components/parcours';
 @use './components/skills';
 @use './components/contacts';
 @use './components/footer';
+@use './components/themeToggle';
 
 @use './components/curtain';
 @use './components/cursor';

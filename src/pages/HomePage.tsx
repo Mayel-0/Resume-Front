@@ -1,18 +1,25 @@
 import Hero from '../components/hero'
 import About from '../components/about'
-import Parcours from '../components/parcours'
+import Parcours, { ParcoursNarrative } from '../components/parcours'
+import World from '../components/world'
+import WorldPanel from '../components/worldPanel'
 import Skills from '../components/skills'
 import Projects from '../components/projects'
+import ProjectsHelix from '../components/projectsHelix'
 import Contacts from '../components/contacts'
 import Marquee from '../components/marquee'
 import ApiError from '../components/apiError'
 
 import useApi from '../hooks/useApi'
+import { prefersReducedMotion } from '../lib/gsap'
 import { usePageReady } from '../context/transitionContext'
+import useSiteTexts from "../hooks/useSiteTexts"
 
 function HomePage() {
 
+  const siteTexts = useSiteTexts();
   const profil = useApi("/api/profil");
+  const heroLayers = useApi("/api/hero-layers");
   const socials = useApi("/api/socials");
   const timeline = useApi("/api/timeline");
   const sections = useApi("/api/sections");
@@ -22,23 +29,31 @@ function HomePage() {
   const skillCategories = useApi("/api/skill-categories");
   const skillsItems = useApi("/api/skill-items");
 
-  const requests = [profil, socials, timeline, sections, projects, projectsTags, briefs, skillCategories, skillsItems];
+  const requests = [siteTexts, profil, heroLayers, socials, timeline, sections, projects, projectsTags, briefs, skillCategories, skillsItems];
   const isLoading = requests.some((request) => request.loading);
-  const hasError = requests.some((request) => request.error);
+  const failure = requests.find((request) => request.error)?.error;
 
   // Le rideau (preloader / transition) se lève quand tout est chargé
   usePageReady(!isLoading);
 
-  if (hasError) return <ApiError />;
+  if (failure) return <ApiError error={failure} />;
+  // Les titres sont découpés au montage : il leur faut leur texte dès le départ
+  if (siteTexts.loading) return <main />;
 
   return (
     <main>
-      <Hero profil={profil.data[0]} socials={socials.data} />
+      <World ready={!isLoading}>
+        <WorldPanel kind="hero" d="0.5,0.5" label={siteTexts.t("hero.panelLabel")} tone="lagon" anchor="hero">
+          <Hero profil={profil.data[0]} layers={heroLayers.data} socials={socials.data} />
+        </WorldPanel>
+        <About briefs={briefs.data} />
+        <Parcours timeline={timeline.data} />
+        <ProjectsHelix projects={projects.data} projectsTags={projectsTags.data} />
+      </World>
       <Marquee items={skillsItems.data.map((item) => item.label)} duration={60} />
-      <About briefs={briefs.data} />
-      <Parcours timeline={timeline.data} sections={sections.data}/>
+      <ParcoursNarrative sections={sections.data} />
       <Skills skillCategories={skillCategories.data} skillsItems={skillsItems.data} />
-      <Projects projects={projects.data} projectsTags={projectsTags.data}/>
+      {prefersReducedMotion() && <Projects projects={projects.data} projectsTags={projectsTags.data}/>}
       <Contacts socials={socials.data} />
     </main>
   )
