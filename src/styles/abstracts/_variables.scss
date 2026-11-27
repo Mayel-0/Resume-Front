@@ -1,4 +1,7 @@
 :root {
+  color-scheme: dark light;
+  --veil: 255, 255, 255; // teinte des voiles translucides (blanc en sombre, encre en clair)
+  --shadow-ink: 0, 0, 0;
   --text: #f1f2f4;
   --text-2: #a8adb6;
   --text-3: #6f757e;
@@ -8,10 +11,10 @@
   --accent-line: color-mix(in srgb, var(--accent) 32%, transparent);
   --accent-ink: color-mix(in srgb, var(--accent) 92%, white 8%);
 
-  --surface: rgba(255, 255, 255, 0.032);
-  --surface-strong: rgba(255, 255, 255, 0.055);
-  --border: rgba(255, 255, 255, 0.09);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  --surface: rgba(var(--veil), 0.032);
+  --surface-strong: rgba(var(--veil), 0.055);
+  --border: rgba(var(--veil), 0.09);
+  --border-strong: rgba(var(--veil), 0.16);
 
   --bg: #0a0b0d;
   --bg-2: #0f1114;
@@ -27,6 +30,21 @@
   --dur-fast: 0.3s;
   --dur-base: 0.6s;
   --dur-slow: 0.9s;
+}
+
+// Thème clair : suit le réglage du système (palette « Clair » de la maquette)
+@media (prefers-color-scheme: light) {
+  :root {
+    --veil: 23, 25, 28;
+    --shadow-ink: 23, 25, 28;
+    --text: #17191c;
+    --text-2: #4b5058;
+    --text-3: #6b7078;
+    --accent: #0b93c6;
+    --accent-ink: color-mix(in srgb, var(--accent) 92%, black 8%);
+    --bg: #e7e6e2;
+    --bg-2: #f7f6f3;
+  }
 }
 
 // Définition des tailles
