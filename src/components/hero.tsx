@@ -6,15 +6,16 @@ import { useTransition } from "../context/transitionContext";
 import { useWorldActive } from "../context/worldContext";
 import { assetUrl, CV_URL, CV_FILENAME } from "../lib/api";
 import TransitionLink from "./transitionLink";
-import type { Profile, Social } from "../models";
+import type { HeroLayer, Profile, Social } from "../models";
 
 interface HeroProps {
   /** Absent tant que l'API n'a pas répondu */
   profil?: Profile;
+  layers?: HeroLayer[];
   socials?: Social[];
 }
 
-function Hero({ profil, socials = [] }: HeroProps) {
+function Hero({ profil, layers = [], socials = [] }: HeroProps) {
   const containerHero = useRef<HTMLElement>(null);
   const firstNameHero = useRef<HTMLSpanElement>(null);
   const HeroPortrait = useRef<HTMLDivElement>(null);
@@ -47,6 +48,7 @@ function Hero({ profil, socials = [] }: HeroProps) {
       const actionBtns = root.querySelectorAll(".hero__actions .btn");
       const role = root.querySelector(".hero__role");
       const tagline = root.querySelector(".hero__tagline");
+      const layerRows = root.querySelectorAll(".hero__layers li");
       // La valeur cible est mémorisée : le texte passe à 0 pendant l'animation
       const counters = Array.from(
         root.querySelectorAll<HTMLElement>(".hero__highlights strong")
@@ -123,6 +125,12 @@ function Hero({ profil, socials = [] }: HeroProps) {
       // 5. Rôle + tagline
       tl.fromTo(role, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.7 }, 1.25);
       tl.fromTo(tagline, { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.7 }, 1.4);
+      tl.fromTo(
+        layerRows,
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.5, stagger: 0.08 },
+        1.5
+      );
 
       // 6. Boutons d'action
       tl.fromTo(
@@ -291,6 +299,15 @@ function Hero({ profil, socials = [] }: HeroProps) {
           </h1>
           <p className="hero__role">{profil?.role}</p>
           <p className="hero__tagline">{profil?.tagline}</p>
+
+          <ul className="hero__layers">
+            {layers.map((item) => (
+              <li key={item.id}>
+                <strong>{item.layer}</strong>
+                <span>{item.tools}</span>
+              </li>
+            ))}
+          </ul>
 
           <div className="hero__actions">
             <TransitionLink className="btn btn--accent" to="/#projets" data-magnetic="0.3">

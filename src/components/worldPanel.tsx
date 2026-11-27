@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useWorldActive } from "../context/worldContext";
 
 interface WorldPanelProps {
-  kind: "hero" | "about" | "title" | "step";
+  kind: "hero" | "about" | "title" | "step" | "ptitle" | "card";
   /** Position sur la carte, en écrans (bureau) : "x,y" */
   d?: string;
   label: string;

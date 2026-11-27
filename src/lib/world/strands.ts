@@ -5,7 +5,7 @@ export type Point = [number, number];
 export const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 
 /** Les quatre brins de la ligne. Ordre de dessin : le lagon passe devant. */
-const STRANDS = [
+export const STRANDS = [
   { color: "--soleil", width: 1.5, amp: 30, wave: 760, phase: 0 },
   { color: "--menthe", width: 2, amp: 22, wave: 1150, phase: 2.1 },
   { color: "--mandarine", width: 2, amp: 38, wave: 940, phase: 4 },

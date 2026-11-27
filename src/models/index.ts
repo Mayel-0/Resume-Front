@@ -1,5 +1,6 @@
 // Modèles des données renvoyées par l'API (miroir de Resume-Back/src/models).
 import type { Brief } from "./brief";
+import type { HeroLayer } from "./heroLayer";
 import type { Profile } from "./profile";
 import type { Project, ProjectTag, ProjectTechStack } from "./project";
 import type { Section } from "./section";
@@ -8,6 +9,7 @@ import type { Social } from "./social";
 import type { TimelineItem } from "./timeline";
 
 export type { Brief } from "./brief";
+export type { HeroLayer } from "./heroLayer";
 export type { Profile } from "./profile";
 export type { Project, ProjectTag, ProjectTechStack, TechType, Visibility } from "./project";
 export type { Section } from "./section";
@@ -21,6 +23,7 @@ export type { TimelineItem } from "./timeline";
  */
 export interface ApiEndpoints {
   "/api/profil": Profile[];
+  "/api/hero-layers": HeroLayer[];
   "/api/socials": Social[];
   "/api/timeline": TimelineItem[];
   "/api/sections": Section[];

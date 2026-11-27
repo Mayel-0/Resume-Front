@@ -1,4 +1,6 @@
 import { gsap, ScrollTrigger } from "../gsap";
+import { getLenis } from "../lenis";
+import { createHelixPaths, drawHelix, helixLayout, type HelixLayout } from "./helix";
 import { clamp01, drawStrands, smoothPath, type DrawnLine, type Point } from "./strands";
 
 /** Durée d'un trajet entre deux chapitres (en écrans de défilement) */
@@ -7,6 +9,15 @@ const MOBILE_BREAKPOINT = 900;
 const MOBILE_SCROLL_RATIO = 0.9;
 /** Largeur de la pastille de l'étape : son centre sert de point de passage */
 const STEP_DOT_X = 20;
+/** Durée de la rotation d'un projet au suivant, et pause sur chaque projet (en écrans de défilement) */
+const TURN = 0.8;
+const PROJECT_HOLD = 0.5;
+/** Voyage jusqu'à une fiche cliquée, en secondes */
+const CARD_TRAVEL_S = 2;
+/** Au-delà de cet écart de focus, une fiche est « de face » */
+const FACING_MIN = 0.12;
+const FACING_FULL = 0.45;
+const PERSPECTIVE = 1600;
 
 interface Geo {
   el: HTMLElement;
@@ -26,12 +37,25 @@ interface Stop {
   hold: number;
   at: number;
   end?: number;
+  /** Hélice : jusqu'où elle est dessinée, angle de la caméra, et rotation entre deux projets */
+  hu?: number;
+  phi?: number;
+  turn?: boolean;
+}
+
+interface CardGeo extends Geo {
+  index: number;
+  u: number;
+  theta: number;
+  anchor: [number, number, number];
+  phi: number;
 }
 
 export interface WorldElements {
   wrapper: HTMLElement;
   stage: HTMLElement;
   svg: SVGSVGElement;
+  helixSvg: SVGSVGElement;
   hudLabel: HTMLElement;
   hudBar: HTMLElement;
 }
@@ -104,7 +128,7 @@ interface Route {
 }
 
 /** Les points de passage de la ligne : sous l'accueil, autour de À propos, par chaque pastille. */
-function routeFor(panels: HTMLElement[], geo: Map<HTMLElement, Geo>, W: number, H: number, mobile: boolean): Route {
+function routeFor(panels: HTMLElement[], geo: Map<HTMLElement, Geo>, W: number, H: number, mobile: boolean, helix: HelixLayout | null): Route {
   const g = (el: HTMLElement) => geo.get(el) as Geo;
   const hero = g(must(byKind(panels, "hero")[0]));
   const about = g(must(byKind(panels, "about")[0]));
@@ -143,7 +167,9 @@ function routeFor(panels: HTMLElement[], geo: Map<HTMLElement, Geo>, W: number, 
   steps.forEach((s) => points.push(dot(s)));
   key.stepN = points.length - 1;
   const last = steps[steps.length - 1] ?? title;
-  points.push([last.x + W * 0.12, last.y + H * 0.35]);
+  if (!helix) points.push([last.x + W * 0.12, last.y + H * 0.35]);
+  else if (mobile) points.push(helix.entry);
+  else points.push([last.x + W * 0.12, last.y + H * 0.35], [helix.cx + W * 0.03, helix.yTop - H * 0.2], helix.entry);
   return { points, key };
 }
 
@@ -155,20 +181,45 @@ const groupBox = (geos: Geo[], W: number, H: number) => {
   return { c: [(x0 + x1) / 2, (y0 + y1) / 2] as Point, s: Math.min(1, (W * 0.9) / (x1 - x0), (H * 0.8) / (y1 - y0)) };
 };
 
+/** Place le titre « Projets » et les fiches sur l'hélice. */
+function placeHelix(layout: HelixLayout, title: Geo, cards: CardGeo[], mobile: boolean): void {
+  const first = cards[0];
+  if (first && !mobile) title.x = layout.cx - first.w / 2 + title.w / 2;
+  cards.forEach((g, i) => {
+    g.index = i;
+    g.u = layout.uOf(i);
+    g.theta = layout.theta(g.u);
+    g.anchor = layout.point3(g.u, 3);
+    g.phi = i * layout.step;
+    g.on = g.u - 0.05;
+  });
+}
+
 export function buildWorld(els: WorldElements): WorldHandle | null {
-  const { wrapper, stage, svg, hudLabel, hudBar } = els;
+  const { wrapper, stage, svg, helixSvg, hudLabel, hudBar } = els;
   const W = window.innerWidth;
   const H = window.innerHeight;
   const mobile = W < MOBILE_BREAKPOINT;
-  const panels = [...stage.querySelectorAll<HTMLElement>("[data-panel]")];
+  const everyPanel = [...stage.querySelectorAll<HTMLElement>("[data-panel]")];
+  const panels = everyPanel.filter((p) => p.dataset.panel !== "card");
+  const cardEls = byKind(everyPanel, "card");
   if (!["hero", "about", "title"].every((kind) => byKind(panels, kind).length > 0)) return null;
-  const geo = measure(stage, panels);
+  const geo = measure(stage, everyPanel);
   place(panels, geo, W, H, mobile);
-  const route = routeFor(panels, geo, W, H, mobile);
+  const projectsTitle = byKind(panels, "ptitle")[0];
+  const cards = cardEls.map((el) => geo.get(el) as CardGeo);
+  let helix: HelixLayout | null = null;
+  if (projectsTitle && cards.length > 0) {
+    const tg = geo.get(projectsTitle) as Geo;
+    helix = helixLayout({ W, H, mobile, count: cards.length, titleBottom: tg.y + tg.h / 2 });
+    placeHelix(helix, tg, cards, mobile);
+  }
+  const route = routeFor(panels, geo, W, H, mobile, helix);
   stage.classList.remove("measuring");
 
   svg.replaceChildren();
   const line: DrawnLine = drawStrands(svg, smoothPath(route.points), mobile);
+  const helixPaths = helix ? createHelixPaths(svg, helixSvg, mobile) : null;
   const frac = (i: number) => line.fracOf(must(route.points[i]));
   const F = { hero: frac(route.key.hero), aboutIn: frac(route.key.aboutIn), aboutOut: frac(route.key.aboutOut), step1: frac(route.key.step1), stepN: frac(route.key.stepN) };
 
@@ -180,7 +231,38 @@ export function buildWorld(els: WorldElements): WorldHandle | null {
 
   const cam = { x: 0, y: 0, s: 1 };
   const prog = { p: F.hero };
+  const hx = { u: 0, phi: 0 };
   const intro = { k: 0 };
+  let focused = 0;
+
+  const renderCards = (h: HelixLayout) => {
+    let best = -2;
+    cards.forEach((g) => {
+      const q = h.project(g.anchor, hx.phi);
+      const angle = Math.PI / 2 - (g.theta - hx.phi);
+      const facing = Math.cos(angle);
+      if (facing > best) {
+        best = facing;
+        focused = g.index;
+      }
+      const sx = (q.x - cam.x) * cam.s + W / 2;
+      const sy = (q.y - cam.y) * cam.s + H / 2;
+      const scale = cam.s * q.k;
+      const hw = (g.w * scale) / 2;
+      const hh = (g.h * scale) / 2;
+      const offscreen = sx + hw < -200 || sx - hw > W + 200 || sy + hh < -200 || sy - hh > H + 200;
+      g.el.style.visibility = facing < FACING_MIN || offscreen ? "hidden" : "visible";
+      g.el.style.transform = `translate3d(${(sx - g.w / 2).toFixed(1)}px, ${(sy - g.h / 2).toFixed(1)}px, 0) scale(${scale.toFixed(4)}) perspective(${PERSPECTIVE}px) rotateY(${angle.toFixed(4)}rad)`;
+      g.el.style.zIndex = q.z >= 0 ? "3" : "1";
+      g.el.style.opacity = clamp01((facing - FACING_MIN) / FACING_FULL).toFixed(3);
+      g.el.style.setProperty("--focus", clamp01((facing - 0.84) / 0.14).toFixed(3));
+      const on = hx.u >= g.on;
+      if (on !== g.shown) {
+        g.shown = on;
+        g.el.classList.toggle("is-on", on);
+      }
+    });
+  };
 
   const render = () => {
     const p = prog.p * intro.k;
@@ -190,7 +272,13 @@ export function buildWorld(els: WorldElements): WorldHandle | null {
       el.style.strokeDasharray = `${scaled} ${scaled + 10}`;
       el.style.strokeDashoffset = String(scaled * (1 - p));
     });
-    svg.setAttribute("viewBox", `${cam.x - W / 2 / cam.s} ${cam.y - H / 2 / cam.s} ${W / cam.s} ${H / cam.s}`);
+    const viewBox = `${cam.x - W / 2 / cam.s} ${cam.y - H / 2 / cam.s} ${W / cam.s} ${H / cam.s}`;
+    svg.setAttribute("viewBox", viewBox);
+    if (helix && helixPaths) {
+      helixSvg.setAttribute("viewBox", viewBox);
+      drawHelix(helix, helixPaths, hx.u, hx.phi);
+      renderCards(helix);
+    }
     flat.forEach((g) => {
       const sx = (g.x - cam.x) * cam.s + W / 2;
       const sy = (g.y - cam.y) * cam.s + H / 2;
@@ -217,6 +305,16 @@ export function buildWorld(els: WorldElements): WorldHandle | null {
     { id: "a-propos", c: [aboutGeo.x, aboutGeo.y], s: mobile ? Math.min(1, (H * 0.84) / aboutGeo.h) : 1, hold: 1.1, at: F.aboutIn, end: F.aboutOut },
     { id: "parcours", c: parc.c, s: parc.s, hold: 1.1, at: F.step1 - 0.01, end: F.stepN + 0.005 },
   ];
+  if (helix) {
+    const front = (g: CardGeo): Point => {
+      const q = helix.project(g.anchor, g.phi);
+      return [q.x, q.y];
+    };
+    cards.forEach((g, i) => {
+      const [fx, fy] = front(g);
+      stops.push({ id: `projets-${i}`, c: i ? [fx, fy] : [fx, fy - H * 0.06], s: 1, hold: PROJECT_HOLD, turn: i > 0, at: 1, hu: Math.min(1, g.u + 0.02), phi: g.phi });
+    });
+  }
 
   const firstStop = must(stops[0]);
   Object.assign(cam, { x: firstStop.c[0], y: firstStop.c[1], s: 1 });
@@ -225,12 +323,16 @@ export function buildWorld(els: WorldElements): WorldHandle | null {
   stops.forEach((stop, i) => {
     if (i > 0) {
       const prev = must(stops[i - 1]);
-      tl.fromTo(cam, { x: prev.c[0], y: prev.c[1] }, { x: stop.c[0], y: stop.c[1], duration: MOVE, ease: "power2.inOut" }, t);
-      const dip = Math.min(prev.s, stop.s) * (mobile ? 0.82 : 0.72);
-      tl.fromTo(cam, { s: prev.s }, { s: dip, duration: MOVE / 2, ease: "sine.out" }, t)
-        .to(cam, { s: stop.s, duration: MOVE / 2, ease: "sine.in" }, t + MOVE / 2);
-      tl.fromTo(prog, { p: prev.end ?? prev.at }, { p: stop.at, duration: MOVE, ease: "power1.inOut" }, t);
-      t += MOVE;
+      const d = stop.turn ? TURN : MOVE;
+      tl.fromTo(cam, { x: prev.c[0], y: prev.c[1] }, { x: stop.c[0], y: stop.c[1], duration: d, ease: "power2.inOut" }, t);
+      if (!stop.turn) {
+        const dip = Math.min(prev.s, stop.s) * (mobile ? 0.82 : 0.72);
+        tl.fromTo(cam, { s: prev.s }, { s: dip, duration: d / 2, ease: "sine.out" }, t)
+          .to(cam, { s: stop.s, duration: d / 2, ease: "sine.in" }, t + d / 2);
+      }
+      tl.fromTo(prog, { p: prev.end ?? prev.at }, { p: stop.at, duration: d, ease: "power1.inOut" }, t);
+      if (helix) tl.fromTo(hx, { u: prev.hu ?? 0, phi: prev.phi ?? 0 }, { u: stop.hu ?? 0, phi: stop.phi ?? 0, duration: d, ease: "power2.inOut" }, t);
+      t += d;
     }
     tl.addLabel(stop.id, t);
     if (stop.end !== undefined) tl.fromTo(prog, { p: stop.at }, { p: stop.end, duration: stop.hold, ease: "none" }, t);
@@ -242,13 +344,15 @@ export function buildWorld(els: WorldElements): WorldHandle | null {
   tl.set({}, {}, t);
 
   const marks = stops.map((s) => ({ at: tl.labels[s.id] ?? 0, stop: s.id }));
-  const panelOf: Record<string, HTMLElement> = { accueil: heroEl, "a-propos": aboutEl, parcours: titleEl };
+  const panelOf = (stopId: string): HTMLElement =>
+    stopId.startsWith("projets") ? must(projectsTitle) : must({ accueil: heroEl, "a-propos": aboutEl, parcours: titleEl }[stopId]);
   tl.eventCallback("onUpdate", () => {
     render();
     const now = tl.time();
     const current = marks.reduce((cur, m) => (now >= m.at - MOVE / 2 ? m : cur), must(marks[0]));
-    const panel = must(panelOf[current.stop]);
-    hudLabel.textContent = panel.dataset.label ?? "";
+    const panel = panelOf(current.stop);
+    const cardTitle = cardEls[focused]?.querySelector("h3")?.textContent;
+    hudLabel.textContent = current.stop.startsWith("projets") && cardTitle ? `${panel.dataset.label ?? ""} · ${cardTitle}` : (panel.dataset.label ?? "");
     hudBar.parentElement?.style.setProperty("--tone", `var(--${panel.dataset.tone ?? "lagon"})`);
     hudBar.style.transform = `scaleX(${now / t})`;
     stage.dataset.stop = panel.dataset.anchor ?? "";
@@ -258,9 +362,21 @@ export function buildWorld(els: WorldElements): WorldHandle | null {
   const st = ScrollTrigger.create({ trigger: wrapper, start: "top top", end: "bottom bottom", scrub: 0.8, animation: tl });
   render();
 
-  const targets = () => {
-    const at = (label: string) => st.start + ((tl.labels[label] ?? 0) / tl.duration()) * (st.end - st.start);
-    return { hero: at("accueil"), apropos: at("a-propos"), parcours: at("parcours") };
-  };
+  const scrollOfLabel = (label: string) => st.start + ((tl.labels[label] ?? 0) / tl.duration()) * (st.end - st.start);
+
+  // Clic sur une fiche de côté : la caméra tourne jusqu'à elle. Sur la fiche de face, le lien agit normalement.
+  cards.forEach((g) => {
+    g.el.onclick = (event) => {
+      if (focused === g.index) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const destination = scrollOfLabel(`projets-${g.index}`);
+      const lenis = getLenis();
+      if (lenis) lenis.scrollTo(destination, { duration: CARD_TRAVEL_S });
+      else window.scrollTo({ top: destination, behavior: "smooth" });
+    };
+  });
+
+  const targets = () => ({ hero: scrollOfLabel("accueil"), apropos: scrollOfLabel("a-propos"), parcours: scrollOfLabel("parcours"), ...(helix ? { projets: scrollOfLabel("projets-0") } : {}) });
   return { render, intro, targets, progress: () => clamp01(st.progress), scrollAt: (p) => st.start + p * (st.end - st.start) };
 }
