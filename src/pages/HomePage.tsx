@@ -13,9 +13,11 @@ import ApiError from '../components/apiError'
 import useApi from '../hooks/useApi'
 import { prefersReducedMotion } from '../lib/gsap'
 import { usePageReady } from '../context/transitionContext'
+import useSiteTexts from "../hooks/useSiteTexts"
 
 function HomePage() {
 
+  const siteTexts = useSiteTexts();
   const profil = useApi("/api/profil");
   const heroLayers = useApi("/api/hero-layers");
   const socials = useApi("/api/socials");
@@ -27,7 +29,7 @@ function HomePage() {
   const skillCategories = useApi("/api/skill-categories");
   const skillsItems = useApi("/api/skill-items");
 
-  const requests = [profil, heroLayers, socials, timeline, sections, projects, projectsTags, briefs, skillCategories, skillsItems];
+  const requests = [siteTexts, profil, heroLayers, socials, timeline, sections, projects, projectsTags, briefs, skillCategories, skillsItems];
   const isLoading = requests.some((request) => request.loading);
   const hasError = requests.some((request) => request.error);
 
@@ -35,11 +37,13 @@ function HomePage() {
   usePageReady(!isLoading);
 
   if (hasError) return <ApiError />;
+  // Les titres sont découpés au montage : il leur faut leur texte dès le départ
+  if (siteTexts.loading) return <main />;
 
   return (
     <main>
       <World ready={!isLoading}>
-        <WorldPanel kind="hero" d="0.5,0.5" label="Accueil" tone="lagon" anchor="hero">
+        <WorldPanel kind="hero" d="0.5,0.5" label={siteTexts.t("hero.panelLabel")} tone="lagon" anchor="hero">
           <Hero profil={profil.data[0]} layers={heroLayers.data} socials={socials.data} />
         </WorldPanel>
         <About briefs={briefs.data} />

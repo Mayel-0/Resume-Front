@@ -7,6 +7,7 @@ import { useWorldActive } from "../context/worldContext";
 import { assetUrl, CV_URL, CV_FILENAME } from "../lib/api";
 import TransitionLink from "./transitionLink";
 import type { HeroLayer, Profile, Social } from "../models";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 interface HeroProps {
   /** Absent tant que l'API n'a pas répondu */
@@ -16,6 +17,7 @@ interface HeroProps {
 }
 
 function Hero({ profil, layers = [], socials = [] }: HeroProps) {
+  const { t } = useSiteTexts();
   const containerHero = useRef<HTMLElement>(null);
   const firstNameHero = useRef<HTMLSpanElement>(null);
   const HeroPortrait = useRef<HTMLDivElement>(null);
@@ -311,11 +313,11 @@ function Hero({ profil, layers = [], socials = [] }: HeroProps) {
 
           <div className="hero__actions">
             <TransitionLink className="btn btn--accent" to="/#projets" data-magnetic="0.3">
-              Voir mes projets
+              {t("cta.viewProjects")}
               <MoveRight size={24} aria-hidden="true" />
             </TransitionLink>
             <a className="btn" href={CV_URL} download={CV_FILENAME} data-magnetic="0.3">
-              Télécharger le CV
+              {t("cta.downloadCv")}
             </a>
           </div>
 
@@ -355,20 +357,20 @@ function Hero({ profil, layers = [], socials = [] }: HeroProps) {
       <div className="shell">
         <ul className="hero__highlights">
           <li>
-            <strong>Ynov campus</strong>
-            <span>Informatique</span>
+            <strong>{t("hero.degree")}</strong>
+            <span>{t("hero.degreeField")}</span>
           </li>
           <li>
-            <strong>Bac Pro SN</strong>
-            <span>option RISC — mention Très Bien (MDP)</span>
+            <strong>{t("hero.bacTitle")}</strong>
+            <span>{t("hero.bac")}</span>
           </li>
           <li>
             <strong>11</strong>
-            <span>projets réalisés</span>
+            <span>{t("hero.projectsCount")}</span>
           </li>
           <li>
             <strong>8</strong>
-            <span>langages utilisés</span>
+            <span>{t("hero.languagesCount")}</span>
           </li>
         </ul>
 

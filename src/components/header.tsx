@@ -5,16 +5,18 @@ import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from "../lib/gsap"
 import { useTransition } from "../context/transitionContext";
 import { CV_URL, CV_FILENAME } from "../lib/api";
 import TransitionLink from "./transitionLink";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 const SECTIONS = [
-  { id: "apropos", label: "À propos" },
-  { id: "parcours", label: "Parcours" },
-  { id: "competences", label: "Compétences" },
-  { id: "projets", label: "Projets" },
-  { id: "contact", label: "Contact" },
+  { id: "apropos", textKey: "nav.about" },
+  { id: "parcours", textKey: "nav.parcours" },
+  { id: "competences", textKey: "nav.skills" },
+  { id: "projets", textKey: "nav.projects" },
+  { id: "contact", textKey: "nav.contact" },
 ];
 
 function Header() {
+  const { t } = useSiteTexts();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("");
   const location = useLocation();
@@ -193,7 +195,7 @@ function Header() {
         </TransitionLink>
 
         <nav ref={navRef} id="main-navigation" className={`header__nav${isMenuOpen ? " header__nav--open" : ""}`} aria-label="Navigation principale">
-          {SECTIONS.map(({ id, label }) => {
+          {SECTIONS.map(({ id, textKey }) => {
             const isActive = isHomePage && activeSection === id;
             return (
               <TransitionLink
@@ -203,7 +205,7 @@ function Header() {
                 aria-current={isActive ? "location" : undefined}
                 onClick={() => handleNavClick(id)}
               >
-                {label}
+                {t(textKey)}
               </TransitionLink>
             );
           })}
@@ -213,20 +215,20 @@ function Header() {
             aria-current={isProjectsPage ? "page" : undefined}
             onClick={() => setIsMenuOpen(false)}
           >
-            Détail des projets
+            {t("nav.projectsDetail")}
           </TransitionLink>
         </nav>
 
         <div>
           <a className="header__cv" href={CV_URL} download={CV_FILENAME} data-magnetic="0.25">
             <Download size={16} aria-hidden="true" />
-            Télécharger le CV
+            {t("cta.downloadCv")}
           </a>
 
           <button
             className="header__menu"
             type="button"
-            aria-label={isMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            aria-label={isMenuOpen ? t("nav.menuClose") : t("nav.menuOpen")}
             aria-expanded={isMenuOpen}
             aria-controls="main-navigation"
             onClick={() => setIsMenuOpen((isOpen) => !isOpen)}

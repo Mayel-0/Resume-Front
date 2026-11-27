@@ -2,6 +2,7 @@ import { MoveRight } from "lucide-react";
 import { assetUrl } from "../lib/api";
 import TransitionLink from "./transitionLink";
 import type { Project, ProjectTag } from "../models";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 interface ProjectCardProps {
   project: Project;
@@ -9,17 +10,18 @@ interface ProjectCardProps {
 }
 
 function ProjectCard({ project, projectsTags = [] }: ProjectCardProps) {
+  const { t } = useSiteTexts();
   return (
     <article className="project-card card" data-tilt>
       <TransitionLink
         className="project-card__media"
         to={`/ProjectsD#${project.slug}`}
-        aria-label={`Voir le détail du projet ${project.title}`}
+        aria-label={t("projects.cardLabel", { title: project.title })}
         data-cursor="Voir"
       >
         <img
           src={assetUrl(project.imageUrl)}
-          alt={`Aperçu du projet ${project.title}`}
+          alt={t("projects.imageAlt", { title: project.title })}
           loading="lazy"
         />
       </TransitionLink>
@@ -46,7 +48,7 @@ function ProjectCard({ project, projectsTags = [] }: ProjectCardProps) {
 
         <div className="project-card__actions">
           <TransitionLink className="btn btn--sm" to={`/ProjectsD#${project.slug}`}>
-            Détails
+            {t("cta.details")}
             <MoveRight size={16} aria-hidden="true" />
           </TransitionLink>
           {project.githubUrl && (

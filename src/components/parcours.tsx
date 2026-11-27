@@ -5,12 +5,14 @@ import SplitHeading from "./splitHeading";
 import WorldPanel from "./worldPanel";
 import { useWorldActive } from "../context/worldContext";
 import type { Section, TimelineItem } from "../models";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 interface ParcoursProps {
   timeline?: TimelineItem[];
 }
 
 function Parcours({ timeline = [] }: ParcoursProps) {
+  const { t } = useSiteTexts();
   const containerRef = useRef<HTMLOListElement>(null);
   const world = useWorldActive();
 
@@ -87,11 +89,11 @@ function Parcours({ timeline = [] }: ParcoursProps) {
   if (world) {
     return (
       <>
-        <WorldPanel kind="title" d="0.42,2.55" label="Parcours" tone="menthe" anchor="parcours">
-          <h2 className="chapter" id="parcours">Parcours et expériences</h2>
+        <WorldPanel kind="title" d="0.42,2.55" label={t("parcours.panelLabel")} tone="menthe" anchor="parcours">
+          <h2 className="chapter" id="parcours">{t("parcours.title")}</h2>
         </WorldPanel>
         {timeline.map((item, i) => (
-          <WorldPanel key={item.id} kind="step" d="0.27,2.95" label="Parcours" tone="menthe" anchor="parcours" className={i % 2 ? "is-low" : ""}>
+          <WorldPanel key={item.id} kind="step" d="0.27,2.95" label={t("parcours.panelLabel")} tone="menthe" anchor="parcours" className={i % 2 ? "is-low" : ""}>
             <div className="step card">
               <span className="step__dot" aria-hidden="true" />
               <span className="step__when">{item.period}</span>
@@ -108,7 +110,7 @@ function Parcours({ timeline = [] }: ParcoursProps) {
     <section id="parcours" className="section shell">
       <Reveal className="section__head" y={24} stagger={0.12}>
         <span className="section__index">02</span>
-        <SplitHeading as="h2">Parcours et expériences</SplitHeading>
+        <SplitHeading as="h2">{t("parcours.title")}</SplitHeading>
       </Reveal>
 
       <ol className="timeline" ref={containerRef}>

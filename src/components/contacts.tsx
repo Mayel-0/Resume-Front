@@ -3,22 +3,23 @@ import Marquee from "./marquee";
 import Reveal from "./reveal";
 import SplitHeading from "./splitHeading";
 import type { Social } from "../models";
-
-const CALLS = ["Disponible pour une alternance", "Stage", "Collaboration", "Parlons-en"];
+import useSiteTexts from "../hooks/useSiteTexts";
 
 function Contact({ socials = [] }: { socials?: Social[] }) {
+  const { t } = useSiteTexts();
+  const calls = t("contact.calls").split("|").map((call) => call.trim()).filter(Boolean);
+
   return (
     <section id="contact" className="section contact-section">
-      <Marquee className="marquee--tilt" items={CALLS} duration={55} reverse />
+      <Marquee className="marquee--tilt" items={calls} duration={55} reverse />
 
       <div className="shell">
         <div className="contact card">
           <Reveal className="contact__head" y={40} stagger={0.1}>
-            <span className="eyebrow">Contact</span>
-            <SplitHeading as="h2">Discutons de votre projet</SplitHeading>
+            <span className="eyebrow">{t("contact.eyebrow")}</span>
+            <SplitHeading as="h2">{t("contact.title")}</SplitHeading>
             <p className="section__lead">
-              Disponible pour une alternance, un stage ou une collaboration. Le plus simple reste
-              l'e-mail — je réponds rapidement.
+              {t("contact.lead")}
             </p>
           </Reveal>
 

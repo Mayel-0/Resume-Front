@@ -1,6 +1,7 @@
 import Reveal from "./reveal";
 import SplitHeading from "./splitHeading";
 import type { SkillCategory, SkillItem } from "../models";
+import useSiteTexts from "../hooks/useSiteTexts";
 
 interface SkillsProps {
   skillCategories?: SkillCategory[];
@@ -8,15 +9,16 @@ interface SkillsProps {
 }
 
 function Skills({ skillCategories = [], skillsItems = [] }: SkillsProps) {
+  const { t } = useSiteTexts();
   return (
     <section id="competences" className="section shell">
       <Reveal className="section__head" y={24} stagger={0.12}>
         <span className="section__index">03</span>
-        <SplitHeading as="h2">Compétences</SplitHeading>
+        <SplitHeading as="h2">{t("skills.title")}</SplitHeading>
       </Reveal>
       <Reveal y={30}>
         <p className="section__lead">
-          Les technologies que j'utilise au quotidien dans mes projets d'école et personnels.
+          {t("skills.lead")}
         </p>
       </Reveal>
 
